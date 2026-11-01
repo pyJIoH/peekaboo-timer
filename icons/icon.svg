@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f9ff0"/><stop offset="1" stop-color="#9fdcff"/></linearGradient>
+    <clipPath id="tile"><rect width="512" height="512" rx="116"/></clipPath>
+    <clipPath id="face"><circle cx="256" cy="256" r="150"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <path d="M0 430C110 392 220 388 330 410S470 430 512 418V512H0Z" fill="#5fb85a"/>
+    <circle cx="256" cy="270" r="184" fill="#1c2054" opacity=".18"/>
+    <circle cx="256" cy="256" r="184" fill="#fff"/>
+    <g clip-path="url(#face)">
+      <rect x="100" y="100" width="312" height="312" fill="#bfe8ff"/>
+      <circle cx="322" cy="186" r="44" fill="#ffd23f"/>
+      <path d="M256 256V106A150 150 0 1 0 406 256Z" fill="#2fbf62"/>
+    </g>
+    <g stroke="#1c2054" stroke-opacity=".35" stroke-width="8" stroke-linecap="round"><path d="M256 80v14M256 418v14M80 256h14M418 256h14"/></g>
+    <line x1="256" y1="256" x2="404" y2="256" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="256" cy="256" r="18" fill="#fff" stroke="#2fbf62" stroke-width="8"/>
+  </g>
+</svg>

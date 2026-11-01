@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Peekaboo Timer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A visual countdown timer for kids. A hidden picture appears as time runs out. No ads, works offline, on any device.">
+<meta name="theme-color" content="#2b87ef">
+<meta name="color-scheme" content="light dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Peekaboo">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" id="favicon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Grandstander:wght@600;800&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+<script defer src="js/util.js"></script>
+<script defer src="js/timer.js"></script>
+<script defer src="js/library.js"></script>
+<script defer src="js/pictures.js"></script>
+<script defer src="js/sounds.js"></script>
+<script defer src="js/sky.js"></script>
+<script defer src="js/dial.js"></script>
+<script defer src="js/wheel.js"></script>
+<script defer src="js/photos.js"></script>
+<script defer src="js/fireworks.js"></script>
+<script defer src="js/app.js"></script>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.6 7.6 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 4.8v14.4L19.5 12z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="4.6" height="15" rx="1.4" fill="currentColor" stroke="none"/><rect x="13.9" y="4.5" width="4.6" height="15" rx="1.4" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="5.5" y="5.5" width="13" height="13" rx="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="currentColor"/><path d="M15.6 9.2a4 4 0 0 1 0 5.6M18.2 6.6a7.6 7.6 0 0 1 0 10.8"/></symbol>
+    <symbol id="i-mute" viewBox="0 0 24 24"><path d="M4 9.5h3.2L12 5.6v12.8l-4.8-3.9H4z" fill="currentColor"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></symbol>
+    <symbol id="i-digits" viewBox="0 0 24 24"><path d="M4.5 9l2.2-1.6V16.5M10.5 9.4a2.3 2.3 0 0 1 4.5.5c0 1.9-4.6 4.2-4.6 6.6h4.9M17.4 8h3.4l-2 2.8a2.3 2.3 0 1 1-1.7 4.1"/></symbol>
+    <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></symbol>
+    <symbol id="i-again" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4"/><path d="M4.5 4.5V9H9"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="13" rx="3"/><circle cx="12" cy="13" r="3.3"/><path d="M8.6 6.5L10 4.5h4l1.4 2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12.5h8L17 7"/></symbol>
+    <symbol id="i-install" viewBox="0 0 24 24"><path d="M12 4v10.5M7.5 10L12 14.5 16.5 10M5 19.5h14"/></symbol>
+    <symbol id="i-ear" viewBox="0 0 24 24"><path d="M8 10.5V8a4 4 0 0 1 8 0c0 3-3 3.5-3 6.5a2.5 2.5 0 0 1-5 0"/><path d="M10.5 9.5a1.5 1.5 0 0 1 3 0"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill="currentColor" stroke-linejoin="round"/></symbol>
+    <symbol id="i-coin-cw" viewBox="0 0 64 64"><path d="M32 8.5A23.5 23.5 0 1 1 11.6 20.3" fill="none" stroke="currentColor" stroke-width="4.2" stroke-linecap="round"/><path d="M15.2 13.6L10.2 22.8 20.4 22.2z" fill="currentColor"/></symbol>
+    <symbol id="cloud" viewBox="0 0 200 90"><path d="M38 86c-19 0-34-12-34-28s14-27 31-27c4-17 19-28 37-28 17 0 31 9 37 23 4-2 9-3 14-3 17 0 31 12 33 28 14 1 26 11 26 23 0 7-6 12-13 12z"/></symbol>
+  </defs>
+</svg>
+
+<!-- Sky: follows the real time of day -->
+<div class="sky" id="sky" data-period="day" aria-hidden="true">
+  <div class="sky-stars"><div class="stars stars-a" id="starsA"></div><div class="stars stars-b" id="starsB"></div></div>
+  <div class="sky-sun" id="skySun"></div>
+  <div class="sky-moon" id="skyMoon"><i></i><i></i><i></i></div>
+  <div class="sky-clouds">
+    <svg class="cloud cloud-1"><use href="#cloud"/></svg>
+    <svg class="cloud cloud-2"><use href="#cloud"/></svg>
+    <svg class="cloud cloud-3"><use href="#cloud"/></svg>
+  </div>
+  <svg class="cloud-bank" viewBox="0 0 1440 260" preserveAspectRatio="xMidYMax slice">
+    <g class="bank-back">
+      <circle cx="60" cy="200" r="110"/><circle cx="240" cy="168" r="120"/><circle cx="430" cy="190" r="108"/><circle cx="610" cy="158" r="130"/>
+      <circle cx="810" cy="186" r="118"/><circle cx="990" cy="164" r="126"/><circle cx="1180" cy="190" r="114"/><circle cx="1370" cy="168" r="126"/>
+      <rect x="0" y="200" width="1440" height="60"/>
+    </g>
+    <g class="bank-front">
+      <circle cx="0" cy="238" r="92"/><circle cx="150" cy="216" r="96"/><circle cx="315" cy="232" r="90"/><circle cx="475" cy="210" r="100"/>
+      <circle cx="645" cy="234" r="90"/><circle cx="805" cy="212" r="100"/><circle cx="965" cy="234" r="92"/><circle cx="1125" cy="210" r="100"/>
+      <circle cx="1285" cy="232" r="92"/><circle cx="1440" cy="214" r="100"/>
+      <rect x="0" y="236" width="1440" height="24"/>
+    </g>
+  </svg>
+  <div class="sky-dim"></div>
+</div>
+
+<main class="app" id="app" data-view="setup">
+
+  <div class="device" id="device">
+    <!-- The dial: picture under a coloured cover -->
+    <div class="dial" id="dial" role="timer" aria-live="off" aria-label="Timer set to 5 minutes">
+      <div class="dial-bezel">
+        <div class="dial-face" id="dialFace">
+          <img class="dial-pic" id="dialPic" alt="" draggable="false">
+          <svg class="dial-cover" viewBox="-100 -100 200 200" aria-hidden="true"><path id="coverPath" d=""/></svg>
+          <div class="dial-shade"></div>
+          <div class="dial-count" id="dialCount" aria-hidden="true" hidden></div>
+
+          <!-- iPhone-style time wheels (setup only) -->
+          <div class="picker v-setup" id="picker">
+            <div class="picker-band" aria-hidden="true"></div>
+            <div class="wheel-col"><div class="wheel" id="wheelH"></div><span class="wheel-unit" aria-hidden="true">hours</span></div>
+            <div class="wheel-col"><div class="wheel" id="wheelM"></div><span class="wheel-unit" aria-hidden="true">min</span></div>
+            <div class="wheel-col"><div class="wheel" id="wheelS"></div><span class="wheel-unit" aria-hidden="true">sec</span></div>
+          </div>
+        </div>
+      </div>
+      <button class="sound-hint" id="soundHint" type="button" hidden>Tap here to turn the sound on</button>
+    </div>
+
+    <!-- Controls under the dial -->
+    <div class="controls" id="controls">
+      <div class="info">
+        <div class="status" id="deviceLabel" hidden></div>
+        <div class="readout" id="readout" hidden></div>
+      </div>
+      <div class="bump" id="bump" aria-hidden="true"></div>
+
+      <div class="ctl-row" id="ctlRow">
+        <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Hidden picture"></button>
+        <button class="coin coin-gold slot-l v-run" id="minusCoin" type="button" data-adjust="-small" aria-label="10 seconds less">
+          <svg class="coin-arrow flip" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="minusNum">−10</span>
+        </button>
+        <button class="coin coin-plain slot-l v-done" id="againBtn" type="button" aria-label="Again" title="Again"><svg class="ico"><use href="#i-again"/></svg></button>
+
+        <div class="big">
+          <button class="big-start v-setup" id="startBtn" type="button">Start</button>
+          <div class="big-split v-run">
+            <button class="half half-l" id="pauseBtn" type="button" aria-label="Pause"><svg class="ico"><use href="#i-pause"/></svg></button>
+            <button class="half half-r" id="stopBtn" type="button" aria-label="Stop the timer" title="Stop (Esc)"><svg class="ico"><use href="#i-stop"/></svg></button>
+          </div>
+          <button class="big-done v-done" id="doneBtn" type="button" aria-label="Done"><svg class="ico"><use href="#i-check"/></svg></button>
+        </div>
+
+        <button class="coin coin-plain slot-r v-setup" id="routinesBtn" type="button" aria-label="Routines" title="Routines"><svg class="ico"><use href="#i-star"/></svg></button>
+        <button class="coin coin-gold slot-r v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
+          <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
+        </button>
+        <span class="coin coin-ghost slot-r v-done" aria-hidden="true"></span>
+      </div>
+
+      <!-- Small flat buttons along the bottom edge -->
+      <div class="tool-row">
+        <button class="tool" id="muteBtn" type="button" aria-label="Turn sound off" title="Sound (M)"><svg class="ico"><use href="#i-sound"/></svg></button>
+        <button class="tool v-run" id="digitsBtn" type="button" aria-label="Hide the time under the circle" aria-pressed="true" title="Time under the circle (D)"><svg class="ico"><use href="#i-digits"/></svg></button>
+        <button class="tool v-setup" id="settingsBtn" type="button" aria-label="Settings" title="Settings"><svg class="ico"><use href="#i-gear"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <button class="float-btn float-r" id="fullBtn" type="button" aria-label="Full screen" title="Full screen (F)"><svg class="ico"><use href="#i-full"/></svg></button>
+  <button class="float-btn float-l" id="installBtn" type="button" hidden><svg class="ico"><use href="#i-install"/></svg><span>Install</span></button>
+</main>
+
+<!-- ===== Picture sheet ===== -->
+<dialog class="sheet" id="pictureSheet" aria-labelledby="pictureSheetTitle">
+  <div class="sheet-inner">
+    <header class="sheet-head">
+      <h2 id="pictureSheetTitle">Hidden picture</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="sheet-body">
+      <p class="hint">“Surprise me” shows a different picture every time the timer starts.</p>
+      <div class="pic-sections" id="pictureGrid"></div>
+      <input type="file" id="photoInput" accept="image/*" hidden>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===== Routines sheet ===== -->
+<dialog class="sheet" id="routineSheet" aria-labelledby="routineSheetTitle">
+  <div class="sheet-inner">
+    <header class="sheet-head">
+      <h2 id="routineSheetTitle">Routines</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="sheet-body">
+      <p class="hint">Tap a routine to start it.</p>
+      <ul class="routine-list" id="routineList"></ul>
+      <form class="routine-save" id="routineForm">
+        <label class="field-label" for="routineName">Save the current timer as a routine</label>
+        <div class="routine-save-row">
+          <input class="text-input" id="routineName" type="text" maxlength="28" placeholder="Bath time" autocomplete="off">
+          <button class="pill-btn primary" type="submit">Save</button>
+        </div>
+        <p class="hint" id="routineHint"></p>
+      </form>
+      <button class="link-btn" type="button" id="routinesRestore">Add back the example routines</button>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===== Settings sheet ===== -->
+<dialog class="sheet" id="settingsSheet" aria-labelledby="settingsTitle">
+  <div class="sheet-inner">
+    <header class="sheet-head">
+      <h2 id="settingsTitle">Settings</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="sheet-body">
+
+      <section class="set-group" aria-labelledby="sgTimer">
+        <h3 id="sgTimer">Timer</h3>
+        <div class="set-cells">
+          <label class="set-row" for="setDigits">
+            <span class="set-text"><b>Show the time under the circle</b><small>The last 5 seconds always count down in the middle</small></span>
+            <input class="switch" type="checkbox" id="setDigits" data-setting="digits">
+          </label>
+          <div class="set-row stack">
+            <span class="set-text"><b>Hidden picture</b></span>
+            <div class="seg" role="radiogroup" aria-label="Hidden picture">
+              <label><input type="radio" name="reveal" id="revealGradual" value="gradual" data-setting="reveal"><span>Appears bit by bit</span></label>
+              <label><input type="radio" name="reveal" id="revealSurprise" value="surprise" data-setting="reveal"><span>Blurry until the end</span></label>
+            </div>
+          </div>
+          <div class="set-row stack">
+            <span class="set-text"><b>Surprise pictures come from</b><small>Every start picks a new picture from these groups</small></span>
+            <div class="cat-chips" id="surpriseCats"></div>
+          </div>
+          <div class="set-row stack">
+            <span class="set-text"><b>Cover colour</b></span>
+            <div class="swatches" role="radiogroup" aria-label="Cover colour">
+              <label class="swatch sw-traffic" title="Green, then amber, then red"><input type="radio" name="color" id="colTraffic" value="traffic" data-setting="color"><span></span><em>Traffic light</em></label>
+              <label class="swatch" style="--sw:#ef4444" title="Red"><input type="radio" name="color" id="colRed" value="red" data-setting="color"><span></span><em>Red</em></label>
+              <label class="swatch" style="--sw:#3b82f6" title="Blue"><input type="radio" name="color" id="colBlue" value="blue" data-setting="color"><span></span><em>Blue</em></label>
+              <label class="swatch" style="--sw:#8b5cf6" title="Purple"><input type="radio" name="color" id="colPurple" value="purple" data-setting="color"><span></span><em>Purple</em></label>
+              <label class="swatch" style="--sw:#ec4899" title="Pink"><input type="radio" name="color" id="colPink" value="pink" data-setting="color"><span></span><em>Pink</em></label>
+              <label class="swatch" style="--sw:#14b8a6" title="Teal"><input type="radio" name="color" id="colTeal" value="teal" data-setting="color"><span></span><em>Teal</em></label>
+            </div>
+          </div>
+          <div class="set-row stack">
+            <span class="set-text"><b>Gold coins add or take away</b></span>
+            <div class="seg" role="radiogroup" aria-label="Gold coin step">
+              <label><input type="radio" name="step" id="step1" value="1000" data-setting="step" data-type="number"><span>1 s</span></label>
+              <label><input type="radio" name="step" id="step5" value="5000" data-setting="step" data-type="number"><span>5 s</span></label>
+              <label><input type="radio" name="step" id="step10" value="10000" data-setting="step" data-type="number"><span>10 s</span></label>
+              <label><input type="radio" name="step" id="step30" value="30000" data-setting="step" data-type="number"><span>30 s</span></label>
+              <label><input type="radio" name="step" id="step60" value="60000" data-setting="step" data-type="number"><span>1 min</span></label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="set-group" aria-labelledby="sgSound">
+        <h3 id="sgSound">Sound</h3>
+        <div class="set-cells">
+          <div class="set-row stack">
+            <span class="set-text set-text-row"><b>Tick-tock</b><button class="pill-btn small" type="button" id="hearTick"><svg class="ico"><use href="#i-ear"/></svg>Hear it</button></span>
+            <div class="seg" role="radiogroup" aria-label="Tick-tock sound">
+              <label><input type="radio" name="tick" id="tickOff" value="off" data-setting="tick"><span>Off</span></label>
+              <label><input type="radio" name="tick" id="tickClock" value="clock" data-setting="tick"><span>Clock</span></label>
+              <label><input type="radio" name="tick" id="tickWood" value="wood" data-setting="tick"><span>Wood</span></label>
+              <label><input type="radio" name="tick" id="tickBubble" value="bubble" data-setting="tick"><span>Bubble</span></label>
+            </div>
+            <div class="seg" role="radiogroup" aria-label="Tick-tock speed">
+              <label><input type="radio" name="tickRate" id="rate2" value="2" data-setting="tickRate" data-type="number"><span>Twice a second</span></label>
+              <label><input type="radio" name="tickRate" id="rate1" value="1" data-setting="tickRate" data-type="number"><span>Once a second</span></label>
+            </div>
+            <label class="slider" for="setTickVol"><span>Volume</span><input type="range" id="setTickVol" min="0" max="1" step="0.05" data-setting="tickVolume" data-type="number"></label>
+          </div>
+          <label class="set-row" for="setPips">
+            <span class="set-text"><b>Countdown beeps</b><small>Beeps for the last five seconds</small></span>
+            <input class="switch" type="checkbox" id="setPips" data-setting="pips">
+          </label>
+          <div class="set-row stack">
+            <span class="set-text set-text-row"><b>When time is up</b><button class="pill-btn small" type="button" id="hearEnd"><svg class="ico"><use href="#i-ear"/></svg>Hear it</button></span>
+            <div class="seg seg-wrap" role="radiogroup" aria-label="End sound">
+              <label><input type="radio" name="endSound" id="endFireworks" value="fireworks" data-setting="endSound"><span>Fireworks</span></label>
+              <label><input type="radio" name="endSound" id="endFanfare" value="fanfare" data-setting="endSound"><span>Fanfare</span></label>
+              <label><input type="radio" name="endSound" id="endChimes" value="chimes" data-setting="endSound"><span>Chimes</span></label>
+              <label><input type="radio" name="endSound" id="endMagic" value="magic" data-setting="endSound"><span>Magic</span></label>
+              <label><input type="radio" name="endSound" id="endCuckoo" value="cuckoo" data-setting="endSound"><span>Cuckoo</span></label>
+              <label><input type="radio" name="endSound" id="endAlarm" value="alarm" data-setting="endSound"><span>Beeps</span></label>
+            </div>
+            <label class="slider" for="setEndVol"><span>Volume</span><input type="range" id="setEndVol" min="0" max="1" step="0.05" data-setting="endVolume" data-type="number"></label>
+          </div>
+          <label class="set-row" for="setRepeat">
+            <span class="set-text"><b>Keep celebrating until Done</b><small>Repeats the ending until someone taps Done</small></span>
+            <input class="switch" type="checkbox" id="setRepeat" data-setting="repeatEnd">
+          </label>
+        </div>
+      </section>
+
+      <section class="set-group" aria-labelledby="sgScreen">
+        <h3 id="sgScreen">Screen</h3>
+        <div class="set-cells">
+          <div class="set-row stack">
+            <span class="set-text"><b>Sky</b><small>Auto follows the clock: sunrise, daytime, sunset and night</small></span>
+            <div class="seg seg-wrap" role="radiogroup" aria-label="Sky">
+              <label><input type="radio" name="sky" id="skyAuto" value="auto" data-setting="sky"><span>Auto</span></label>
+              <label><input type="radio" name="sky" id="skyDawn" value="dawn" data-setting="sky"><span>Morning</span></label>
+              <label><input type="radio" name="sky" id="skyDay" value="day" data-setting="sky"><span>Day</span></label>
+              <label><input type="radio" name="sky" id="skyDusk" value="dusk" data-setting="sky"><span>Evening</span></label>
+              <label><input type="radio" name="sky" id="skyNight" value="night" data-setting="sky"><span>Night</span></label>
+            </div>
+          </div>
+          <div class="set-row stack">
+            <span class="set-text"><b>Menus</b></span>
+            <div class="seg" role="radiogroup" aria-label="Menu appearance">
+              <label><input type="radio" name="theme" id="themeSystem" value="system" data-setting="theme"><span>Match device</span></label>
+              <label><input type="radio" name="theme" id="themeLight" value="light" data-setting="theme"><span>Light</span></label>
+              <label><input type="radio" name="theme" id="themeDark" value="dark" data-setting="theme"><span>Dark</span></label>
+            </div>
+          </div>
+          <label class="set-row" for="setWake">
+            <span class="set-text"><b>Keep the screen on</b><small>Stops the screen from sleeping while a timer runs</small></span>
+            <input class="switch" type="checkbox" id="setWake" data-setting="wakeLock">
+          </label>
+          <label class="set-row" for="setNotify">
+            <span class="set-text"><b>Notify me when time is up</b><small id="notifyNote">Shows a notification if you switch to another app or tab</small></span>
+            <input class="switch" type="checkbox" id="setNotify" data-setting="notify">
+          </label>
+        </div>
+      </section>
+
+      <section class="set-group about" aria-labelledby="sgAbout">
+        <h3 id="sgAbout">About</h3>
+        <div class="set-cells">
+          <div class="set-row stack about-text">
+            <p>Peekaboo Timer has no ads, no accounts and no tracking. Your photos, routines and settings stay on this device.</p>
+            <p>Pictures: Microsoft Fluent Emoji (MIT licence) and Google Noto Emoji (Apache 2.0 licence). Monsters, shapes and scenes are drawn by the app itself.</p>
+            <p id="installNote">To use it like an app, add it to your home screen. On iPhone and iPad: tap Share, then <b>Add to Home Screen</b>.</p>
+          </div>
+          <div class="set-row stack keys" id="keysHelp">
+            <b>Keyboard</b>
+            <span><kbd>Space</kbd> start or pause</span>
+            <span><kbd>↑</kbd><kbd>↓</kbd> one minute more or less</span>
+            <span><kbd>←</kbd><kbd>→</kbd> coin step less or more</span>
+            <span><kbd>D</kbd> time under the circle</span>
+            <span><kbd>M</kbd> sound</span>
+            <span><kbd>F</kbd> full screen</span>
+            <span><kbd>Esc</kbd> stop</span>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
+</body>
+</html>
