@@ -25,7 +25,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 ## Features
 
 - Looks like a little timer toy: a cream "device" on a blue sky with clouds, round on top around the big circle and square at the bottom (on its side in phone landscape). Under the circle: a status line (*Paused*, the routine name, or who appeared) and the time, then a wide blue pill **Start** / **Pause | Stop** / **Done** with each half big enough for a finger, gold **−10 / +10** coins, and flat sound / time / settings icons along the bottom.
-- **iPhone-style time wheels** (hours, minutes, seconds) right on the circle: flick, scroll with a mouse wheel, drag or tap a number. Endless, with a soft click per number.
+- **iPhone-style time wheels** (minutes 0–120 and seconds; no hours, it is a kids' timer) right on the circle: flick, scroll with a mouse wheel, drag or tap a number. Endless, with a soft click per number.
 - The picture is never covered by numbers. The remaining time is shown small *under* the circle (can be hidden), and only the **last 5 seconds** count down in the middle in a small badge.
 - **545 hidden pictures, a new surprise every start.** "Surprise me" is the default: each start deals the next card from a shuffled deck, so every picture appears once before any repeat.
   - 472 emoji-style pictures in two art styles (Microsoft Fluent Emoji, Google Noto Emoji): animals, fairies, superheroes, robots, aliens, food and sweets, vehicles, nature and weather, toys, sports, music, party things.

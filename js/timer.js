@@ -4,7 +4,9 @@
   'use strict';
   const PK = (window.PK = window.PK || {});
 
-  const MAX = (23 * 3600 + 59 * 60 + 59) * 1000;
+  // A kids' timer: up to 120 minutes (the minute wheel goes 0-120, seconds 0-59).
+  const MAX_MINUTES = 120;
+  const MAX = (MAX_MINUTES * 60 + 59) * 1000;
 
   class Timer {
     constructor(now) {
@@ -109,5 +111,6 @@
   }
 
   Timer.MAX = MAX;
+  Timer.MAX_MINUTES = MAX_MINUTES;
   PK.Timer = Timer;
 })();

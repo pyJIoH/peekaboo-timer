@@ -363,9 +363,9 @@ body.fx-on .sky-dim { opacity: 1; }
   top: 50%;
   z-index: 3;
   translate: -50% -50%;
-  width: 80%;
+  width: 66%;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: calc(var(--wh) * 0.22) 3%;
   border-radius: calc(var(--wh) * 0.7);
   background: rgba(255, 255, 255, 0.95);

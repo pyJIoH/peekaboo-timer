@@ -207,8 +207,7 @@
   let syncingWheels = false;
   const wheelOpts = (count, label) => ({ count, label, onChange: onWheel, onTick: wheelTick });
   const wheels = {
-    h: new PK.Wheel($('#wheelH'), wheelOpts(24, 'Hours')),
-    m: new PK.Wheel($('#wheelM'), wheelOpts(60, 'Minutes')),
+    m: new PK.Wheel($('#wheelM'), wheelOpts(PK.Timer.MAX_MINUTES + 1, 'Minutes')),
     s: new PK.Wheel($('#wheelS'), wheelOpts(60, 'Seconds')),
   };
   function wheelTick() {
@@ -217,7 +216,7 @@
   }
   function onWheel() {
     if (syncingWheels) return;
-    setup.duration = (wheels.h.value * 3600 + wheels.m.value * 60 + wheels.s.value) * SEC;
+    setup.duration = (wheels.m.value * 60 + wheels.s.value) * SEC;
     setup.label = '';
     saveSetup();
     updateSetupMeta();
@@ -225,8 +224,7 @@
   function syncWheels() {
     syncingWheels = true;
     const t = Math.round(setup.duration / SEC);
-    wheels.h.set(Math.floor(t / 3600));
-    wheels.m.set(Math.floor((t % 3600) / 60));
+    wheels.m.set(Math.min(PK.Timer.MAX_MINUTES, Math.floor(t / 60)));
     wheels.s.set(t % 60);
     syncingWheels = false;
   }
