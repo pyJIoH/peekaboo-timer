@@ -18,14 +18,49 @@
   let endVoice = null;
   let endRepeat = 0;
   let endRepeatUntil = 0;
+  let endJob = null; // the end melody being played: { name, repeat, doneAt (audio clock) }
   let fxVoice = null;
   let previewTimers = [];
+
+  // Health of the audio context. On iPhone and iPad (every browser there is WebKit) a context
+  // can be left interrupted, or "running" yet silent, after the page was in the background, a
+  // call, Siri or a change of audio output. Such a context is not trusted again: it is replaced
+  // on the next tap, because a new context can only start inside a user gesture.
+  const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const STUCK_MS = 1500;
+  let stale = false;   // replace the context on the next user gesture
+  let ran = false;     // this context has been running at least once
+  let clockSeen = 0;   // last audio clock reading, and when it was taken
+  let clockAt = 0;
+  let stuckMs = 0;     // how long the audio clock has stood still while "running"
+  let listener = null;
+
+  function notify() {
+    if (!listener) return;
+    try { listener(); } catch (e) { /* ignore */ }
+  }
+
+  function suspect() {
+    if (ctx) stale = true;
+  }
 
   function ensure() {
     if (ctx) return ctx;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
-    try { ctx = new AC({ latencyHint: 'interactive' }); } catch (e) { return null; }
+    let made;
+    try { made = new AC({ latencyHint: 'interactive' }); } catch (e) { return null; }
+    ctx = made;
+    stale = false;
+    ran = made.state === 'running';
+    clockAt = 0;
+    stuckMs = 0;
+    made.onstatechange = () => {
+      if (made !== ctx) return;
+      if (made.state === 'running') ran = true;
+      else if (ran) stale = true; // it stopped without being asked to: this code never suspends it
+      notify();
+    };
 
     const limiter = ctx.createDynamicsCompressor();
     limiter.threshold.value = -6;
@@ -86,8 +121,13 @@
       // Safari 17+: play even when the ring/silent switch is on — a timer has to be heard.
       if (navigator.audioSession && navigator.audioSession.type !== 'playback') navigator.audioSession.type = 'playback';
     } catch (e) { /* ignore */ }
-    const c = ensure();
+    const fresh = !ctx;
+    let c = ensure();
     if (!c) return;
+    if (!fresh && (stale || c.state === 'closed') && gestureLive()) {
+      c = rebuild();
+      if (!c) return;
+    }
     if (c.state !== 'running') c.resume().catch(() => {});
     try {
       const b = c.createBuffer(1, 1, 22050);
@@ -98,7 +138,55 @@
     } catch (e) { /* ignore */ }
   }
 
-  const ready = () => !!ctx && ctx.state === 'running';
+  /** False while the browser would refuse to start audio (a scroll, the first half of a tap). */
+  function gestureLive() {
+    const ua = navigator.userActivation;
+    return !ua || ua.isActive;
+  }
+
+  /** Throws the context away and builds a new one. Call inside a user gesture. */
+  function rebuild() {
+    const old = ctx;
+    let unfinished = false;
+    try { unfinished = !!endJob && old.currentTime < endJob.doneAt; } catch (e) { /* ignore */ }
+    cancelTicks();
+    clearTimeout(endRepeat);
+    endRepeat = 0;
+    old.onstatechange = null;
+    ctx = null;
+    endVoice = null;
+    fxVoice = null;
+    lastClick = -1;
+    try {
+      const closing = old.close();
+      if (closing && closing.catch) closing.catch(() => {});
+    } catch (e) { /* ignore */ }
+    if (!ensure()) return null;
+    // An end melody the old context never got to finish starts again on the new one.
+    if (endJob && (unfinished || (endJob.repeat && Date.now() < endRepeatUntil))) playEndPass();
+    notify();
+    return ctx;
+  }
+
+  /** Notices a context that says "running" while its clock stands still. */
+  function watchClock() {
+    if (!ctx || ctx.state !== 'running') { clockAt = 0; stuckMs = 0; return; }
+    const now = performance.now();
+    const ct = ctx.currentTime;
+    const was = stuckMs;
+    if (clockAt && ct === clockSeen) {
+      const gap = now - clockAt;
+      if (gap < 1000) stuckMs += gap; // longer gaps mean the page itself was asleep
+    } else {
+      stuckMs = 0;
+    }
+    clockSeen = ct;
+    clockAt = now;
+    if (stuckMs > STUCK_MS && was <= STUCK_MS) { stale = true; notify(); }
+    else if (was > STUCK_MS && stuckMs === 0) notify();
+  }
+
+  const ready = () => !!ctx && ctx.state === 'running' && stuckMs <= STUCK_MS;
 
   // ---------- building blocks ----------
   function env(param, t, attack, peak, decay) {
@@ -189,6 +277,7 @@
    * settings.tickRate: 2 = tick-tock every half second, 1 = once a second.
    */
   function scheduleTicks(timer, settings) {
+    watchClock();
     if (!ready() || timer.status !== 'running') return;
     const tickType = TICKS[settings.tick] ? settings.tick : null;
     if (!tickType && !settings.pips) return;
@@ -398,18 +487,22 @@
     stopEnd();
     if (!ensure()) return;
     if (ctx.state !== 'running') ctx.resume().catch(() => {});
-    const fn = ENDS[name];
-    if (!fn) return;
-    const repeat = !!(opts && opts.repeat);
+    if (!ENDS[name]) return;
     endRepeatUntil = Date.now() + 3 * 60 * 1000; // never nag for more than 3 minutes
-    const play = () => {
-      const v = voice(endBus);
-      if (endVoice) fadeOut(endVoice, 0.3);
-      endVoice = v;
-      const dur = fn(ctx.currentTime + 0.05, v);
-      if (repeat && Date.now() < endRepeatUntil) endRepeat = setTimeout(play, (dur + 1.4) * 1000);
-    };
-    play();
+    endJob = { name, repeat: !!(opts && opts.repeat), doneAt: 0 };
+    playEndPass();
+  }
+
+  function playEndPass() {
+    const job = endJob;
+    if (!job || !ctx) return;
+    const v = voice(endBus);
+    if (endVoice) fadeOut(endVoice, 0.3);
+    endVoice = v;
+    const t = ctx.currentTime + 0.05;
+    const dur = ENDS[job.name](t, v);
+    job.doneAt = t + dur;
+    if (job.repeat && Date.now() < endRepeatUntil) endRepeat = setTimeout(playEndPass, (dur + 1.4) * 1000);
   }
 
   function fadeOut(v, sec) {
@@ -425,6 +518,7 @@
   function stopEnd() {
     clearTimeout(endRepeat);
     endRepeat = 0;
+    endJob = null;
     previewTimers.forEach(clearTimeout);
     previewTimers = [];
     if (ctx) {
@@ -518,9 +612,20 @@
     });
   }
 
+  // Coming back to the page, or a new audio output, is when iOS breaks a context without saying so.
+  document.addEventListener('visibilitychange', () => { if (IOS && !document.hidden) suspect(); });
+  window.addEventListener('pageshow', (e) => { if (e.persisted) suspect(); });
+  if (IOS && navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+    navigator.mediaDevices.addEventListener('devicechange', suspect);
+  }
+
   PK.sound = {
     unlock,
     ready,
+    /** True when the context should be replaced on the next tap, even if it claims to be running. */
+    stale: () => stale,
+    /** Calls fn whenever the sound may have started or stopped working. */
+    onChange(fn) { listener = fn; },
     resume() { if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); },
     setVolumes(tick, end, muted) {
       vol.tick = tick;

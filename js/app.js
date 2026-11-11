@@ -976,10 +976,11 @@
     els.soundHint.hidden = !(view === 'run' && !settings.muted && !PK.sound.ready() && (settings.tick !== 'off' || settings.pips));
   }
   const gesture = () => {
-    if (PK.sound.ready()) return;
+    if (PK.sound.ready() && !PK.sound.stale()) return;
     PK.sound.unlock();
     setTimeout(updateSoundHint, 200);
   };
+  PK.sound.onChange(updateSoundHint);
   ['pointerdown', 'pointerup', 'touchend', 'keydown'].forEach((ev) => document.addEventListener(ev, gesture, { capture: true, passive: true }));
   els.soundHint.addEventListener('click', (e) => { e.stopPropagation(); PK.sound.unlock(); setTimeout(updateSoundHint, 200); });
 
