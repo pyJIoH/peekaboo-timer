@@ -56,6 +56,8 @@
   if (!(setup.duration >= 0 && setup.duration <= PK.Timer.MAX)) setup.duration = 5 * MIN;
   let routines = store.get('presets', null);
   if (!Array.isArray(routines)) routines = EXAMPLE_ROUTINES.map((r) => Object.assign({}, r));
+  // Routines saved before the limit was lowered still show and run as the longest allowed time.
+  routines.forEach((r) => { if (r.duration > PK.Timer.MAX_MINUTES * MIN) r.duration = PK.Timer.MAX_MINUTES * MIN; });
   if (setup.v !== 2) {
     // The big picture library arrived: every start is a surprise by default.
     setup.picture = 'random';
