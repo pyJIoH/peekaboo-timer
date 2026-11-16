@@ -88,6 +88,13 @@
     octagon: "It's an octagon!", plus: "It's a plus!", 'half-circle': "It's a half circle!",
   };
 
+  // Numbers 0-100: "It's seven!", "It's twenty-one!", "It's one hundred!" (keys num-0 … num-100).
+  const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
+    'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
+  const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+  const numberWords = (n) => (n === 100 ? 'one hundred' : n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : ''));
+  for (let n = 0; n <= 100; n++) SAY[`num-${n}`] = `It's ${numberWords(n)}!`;
+
   // Sound key → [seconds, ElevenLabs sound-effect prompt]. Kept short, clear and friendly.
   const C = ', close-up, clean, no music, no background noise';
   const FX = {
@@ -354,7 +361,7 @@
   // Topic names, said when a child taps a topic on the "?" sheet (same words as on the tiles).
   // Files: audio/say/topic-<id>.mp3; "random" is "Surprise me".
   const TOPICS = {
-    random: 'Surprise me!', animals: 'Animals!', monsters: 'Monsters and magic!', shapes: 'Shapes!',
+    random: 'Surprise me!', animals: 'Animals!', monsters: 'Monsters and magic!', shapes: 'Shapes!', numbers: 'Numbers!',
     food: 'Food and sweets!', vehicles: 'Things that go!', nature: 'Nature and sky!', fun: 'Toys and fun!',
     photos: 'Your photos!',
   };
@@ -365,6 +372,8 @@
     if (!id) return null;
     let m = /^m:(\d+)$/.exec(id);
     if (m) return { say: 'monster', fx: ROARS[Number(m[1]) % ROARS.length] };
+    m = /^num:(\d+)$/.exec(id);
+    if (m) return { say: `num-${Number(m[1])}`, fx: null };
     m = /^[fn]:(.+)$/.exec(id);
     const key = m ? m[1] : id.startsWith('s:') ? id : '@' + id;
     const row = PICS[key];
@@ -382,5 +391,5 @@
     return list;
   }
 
-  PK.speech = { SAY, FX, PICS, ROARS, TOPICS, lookup, urls, topicUrl };
+  PK.speech = { SAY, FX, PICS, ROARS, TOPICS, lookup, urls, topicUrl, numberWords };
 })();

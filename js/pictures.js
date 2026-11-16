@@ -560,11 +560,52 @@
       <path d="M${fx - 20} ${fy + 20}Q${fx} ${fy + 40} ${fx + 20} ${fy + 20}" fill="none" stroke="${dark}" stroke-width="6" stroke-linecap="round"/>`);
   }
 
+  // ---------- generated: numbers 0-100 ----------
+  // Each digit is a thick marker stroke in a 100 x 160 box, so it looks the same on every device
+  // (an SVG picture cannot use the page's web fonts).
+  const DIGITS = [
+    'M50 14C27 14 14 42 14 80C14 118 27 146 50 146C73 146 86 118 86 80C86 42 73 14 50 14Z',
+    'M24 44L58 16V146',
+    'M16 50C16 28 32 14 52 14C72 14 86 28 86 48C86 72 66 92 16 146H88',
+    'M16 30C26 19 38 14 52 14C72 14 86 26 86 44C86 62 72 74 48 76C74 78 88 92 88 112C88 134 72 146 50 146C34 146 22 140 12 128',
+    'M68 146V14L12 106H92',
+    'M84 16H28L22 72C31 66 41 63 52 63C74 63 88 80 88 104C88 130 72 146 50 146C34 146 22 140 12 128',
+    'M80 24C72 17 63 14 54 14C30 14 14 42 14 88C14 124 30 146 52 146C74 146 88 128 88 106C88 84 74 70 54 70C36 70 22 80 14 96',
+    'M14 16H86L42 146',
+    'M50 76C30 76 19 62 19 45C19 27 32 14 50 14C68 14 81 27 81 45C81 62 70 76 50 76ZM50 76C28 76 14 91 14 111C14 132 29 146 50 146C71 146 86 132 86 111C86 91 72 76 50 76Z',
+    'M86 64C78 80 64 90 48 90C28 90 14 76 14 54C14 30 30 14 50 14C72 14 86 34 86 72C86 118 70 146 46 146C37 146 29 143 21 136',
+  ];
+
+  function numberPicture(n) {
+    const digits = String(n).split('').map(Number);
+    const hue = (n * 47 + 12) % 360;
+    const fill = hsl(hue, 82, 58);
+    const dark = hsl(hue, 70, 34);
+    const bgH = (hue + 180) % 360;
+    const step = 114; // digit to digit, with a clear gap between their outlines
+    const w = 100 + (digits.length - 1) * step;
+    const k = Math.min(1.45, 290 / w);
+    const x0 = 200 - (w * k) / 2;
+    const y0 = 200 - (160 * k) / 2;
+    const g = (stroke, width, extra) => digits.map((d, i) =>
+      `<path d="${DIGITS[d]}" transform="translate(${(x0 + i * step * k).toFixed(1)} ${y0.toFixed(1)}) scale(${k.toFixed(3)})" fill="none" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round" ${extra || ''}/>`).join('');
+    let dots = '';
+    for (let y = 20; y < 400; y += 52) for (let x = (y / 52) % 2 ? 46 : 20; x < 400; x += 52) dots += `<circle cx="${x}" cy="${y}" r="7"/>`;
+    return svg(`
+      <rect width="400" height="400" fill="${hsl(bgH, 85, 90)}"/>
+      <g fill="${hsl(bgH, 70, 82)}">${dots}</g>
+      <ellipse cx="200" cy="${(y0 + 160 * k + 22).toFixed(0)}" rx="${Math.min(150, (w * k) / 2 + 20).toFixed(0)}" ry="13" fill="#000" opacity=".1"/>
+      <g transform="translate(0 6)" opacity=".18">${g('#000', 40)}</g>
+      ${g(dark, 40)}
+      ${g(fill, 26)}`);
+  }
+
   // ---------- one catalog for everything ----------
   const CATEGORIES = [
     { id: 'animals', name: 'Animals' },
     { id: 'monsters', name: 'Monsters and magic' },
     { id: 'shapes', name: 'Shapes' },
+    { id: 'numbers', name: 'Numbers' },
     { id: 'food', name: 'Food and sweets' },
     { id: 'vehicles', name: 'Things that go' },
     { id: 'nature', name: 'Nature and sky' },
@@ -577,6 +618,7 @@
   BUILTINS.forEach((b) => add({ id: b.id, name: b.name, cat: b.cat, kind: 'scene', surprise: b.cat !== 'none' }));
   for (let n = 1; n <= MONSTER_COUNT; n++) add({ id: `m:${n}`, name: monsterName(n), cat: 'monsters', kind: 'monster', surprise: true });
   SHAPES.forEach((s, i) => add({ id: `s:${s[0]}`, name: s[1], cat: 'shapes', kind: 'shape', index: i, surprise: true }));
+  for (let n = 0; n <= 100; n++) add({ id: `num:${n}`, name: `Number ${n}`, cat: 'numbers', kind: 'number', surprise: true });
   (PK.library || []).forEach(([src, file, name, cat]) => add({
     id: `${src}:${file}`, name, cat, kind: 'sticker', surprise: true,
     url: `library/${src === 'n' ? 'noto' : 'fluent'}/${file}.svg`,
@@ -606,6 +648,7 @@
       let url;
       if (item.kind === 'monster') url = toData(monster(Number(item.id.slice(2))));
       else if (item.kind === 'shape') url = toData(shapeFriend(item.index));
+      else if (item.kind === 'number') url = toData(numberPicture(Number(item.id.slice(4))));
       else url = toData(BUILTINS.find((b) => b.id === item.id).draw());
       cache.set(item.id, url);
       return url;

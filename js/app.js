@@ -6,7 +6,7 @@
 
   const SEC = 1000;
   const MIN = 60 * SEC;
-  const SETTINGS_VERSION = 4;
+  const SETTINGS_VERSION = 5;
 
   const DEFAULT_SETTINGS = {
     digits: true,
@@ -56,6 +56,8 @@
   if (settingsFrom < 3) settings.step = 'auto';
   // v4: the celebration keeps going until a grown-up taps Done.
   if (settingsFrom < 4) settings.repeatEnd = true;
+  // v5: the new Numbers topic starts switched on, also for a parent who picked groups by hand.
+  if (settingsFrom < 5 && Array.isArray(settings.surprise) && !settings.surprise.includes('numbers')) settings.surprise.push('numbers');
   if (settingsFrom < SETTINGS_VERSION) {
     settings.v = SETTINGS_VERSION;
     store.set('settings', settings);
@@ -116,8 +118,8 @@
   // Topics: "random:animals" is a surprise from one group only; plain "random" uses every group.
   const topicOf = (id) => (typeof id === 'string' && id.startsWith('random:') ? id.slice(7) : null);
   const isRandom = (id) => id === 'random' || !!topicOf(id);
-  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'food', 'vehicles', 'nature', 'fun', 'photos'];
-  const TOPIC_ICON = { animals: 'f:cat-face', monsters: 'm:3', shapes: 's:star', food: 'f:cupcake', vehicles: 'f:rocket',
+  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'numbers', 'food', 'vehicles', 'nature', 'fun', 'photos'];
+  const TOPIC_ICON = { animals: 'f:cat-face', monsters: 'm:3', shapes: 's:star', numbers: 'num:12', food: 'f:cupcake', vehicles: 'f:rocket',
     nature: 'f:sunflower', fun: 'f:balloon' };
   const topicName = (t) => (t === 'photos' ? 'Your photos' : (PK.pictures.categories.find((c) => c.id === t) || {}).name || 'Surprise me');
   const topicIcon = (t) => (t === 'photos' ? (photos[0] && photos[0].id) || 'random' : TOPIC_ICON[t] || 'random');
