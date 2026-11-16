@@ -31,7 +31,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
   - 472 emoji-style pictures in two art styles (Microsoft Fluent Emoji, Google Noto Emoji): animals, fairies, superheroes, robots, aliens, food and sweets, vehicles, nature and weather, toys, sports, music, party things.
   - 48 friendly monsters and 16 shape friends (circle, star, heart, triangle...) drawn by the app's own code, so they work offline.
   - 8 illustrated scenes, a plain clock face, and **your own photos** (unlimited, stored only on the device).
-  - The **?** coin opens topics, not single pictures: *Surprise me*, Animals, Monsters and magic, Shapes, Food and sweets, Things that go, Nature and sky, Toys and fun, Picture scenes (and Your photos when there are some). The child picks a topic; the picture inside it stays a surprise, and each topic deals its own deck without repeats. The coin shows the topic's picture, and routines remember a topic.
+  - The **?** coin opens topics, not single pictures: *Surprise me*, Animals, Monsters and magic, Shapes, Food and sweets, Things that go, Nature and sky, Toys and fun, Picture scenes (and Your photos when there are some). The child picks a topic (the voice says its name: "ANIMALS!"); the picture inside it stays a surprise, and each topic deals its own deck without repeats. The coin shows the topic's picture, and routines remember a topic.
   - Settings → *Surprise pictures come from* picks which groups *Surprise me* uses, and only those groups are offered as topics.
   - When time is up the picture spins and its name appears ("Jellyfish!").
 - Green → amber → red cover, or a fixed colour. Optional **blurry until the end** mode.

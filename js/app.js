@@ -406,7 +406,11 @@
     const on = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
     return TOPIC_ORDER.filter((t) => on.has(t) && (t === 'photos' ? photos.length > 0 : PK.pictures.items.some((i) => i.cat === t && i.surprise)));
   }
+  function topicVoice(id) {
+    return PK.speech.topicUrl(id === 'random' ? 'random' : topicOf(id));
+  }
   function buildTopicGrid() {
+    if (settings.speak) PK.sound.preloadClips(['random', ...shownTopics()].map((t) => PK.speech.topicUrl(t)));
     const host = $('#topicGrid');
     host.innerHTML = '';
     host.appendChild(tile('random', 'Surprise me'));
@@ -416,6 +420,8 @@
   $('#topicGrid').addEventListener('click', (e) => {
     const t = e.target.closest('.pic-tile');
     if (!t) return;
+    const voice = settings.speak && topicVoice(t.dataset.id);
+    if (voice) { PK.sound.unlock(); PK.sound.speak([voice]); } // "Animals!"
     closeSheet(els.topicSheet);
     choosePicture(t.dataset.id);
   });

@@ -66,6 +66,30 @@
 
   const list = document.getElementById('list');
   const rows = [];
+  // Topic names, said when a topic is tapped on the "?" sheet.
+  const th = document.createElement('h2');
+  th.textContent = 'Topics (the ? coin)';
+  list.append(th);
+  for (const [t, words] of Object.entries(speech.TOPICS)) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.innerHTML = '<b></b><small></small>';
+    text.querySelector('b').textContent = words;
+    text.querySelector('small').textContent = `say/topic-${t}`;
+    const btns = document.createElement('div');
+    btns.className = 'btns';
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = '▶';
+    const src = `../${speech.topicUrl(t)}`;
+    b.addEventListener('click', () => play([{ src, row }]));
+    btns.append(b);
+    row.append(document.createElement('div'), text, btns);
+    list.append(row);
+    rows.push({ row, g: null, src, hay: `${words} topic ${t}`.toLowerCase() });
+  }
   let lastCat = '';
   for (const g of [...groups.values()].sort((a, b) => pictures.categories.findIndex((c) => c.id === a.cat) - pictures.categories.findIndex((c) => c.id === b.cat))) {
     if (g.cat !== lastCat) { const h = document.createElement('h2'); h.textContent = names[g.cat] || g.cat; list.append(h); lastCat = g.cat; }
@@ -111,7 +135,7 @@
     const q = e.target.value.trim().toLowerCase();
     rows.forEach((r) => { r.row.hidden = !!q && !r.hay.includes(q); });
   });
-  document.getElementById('all').addEventListener('click', () => play(rows.filter((r) => !r.row.hidden).flatMap((r) => clips(r.g, r.row))));
+  document.getElementById('all').addEventListener('click', () => play(rows.filter((r) => !r.row.hidden).flatMap((r) => (r.g ? clips(r.g, r.row) : [{ src: r.src, row: r.row }]))));
   document.getElementById('stop').addEventListener('click', () => { queue = []; audio.pause(); if (current) current.row.classList.remove('playing'); current = null; });
 })();
 </script>

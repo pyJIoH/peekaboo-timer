@@ -351,6 +351,15 @@
 
   const ROARS = ['roar1', 'roar2', 'roar3'];
 
+  // Topic names, said when a child taps a topic on the "?" sheet (same words as on the tiles).
+  // Files: audio/say/topic-<id>.mp3; "random" is "Surprise me".
+  const TOPICS = {
+    random: 'Surprise me!', animals: 'Animals!', monsters: 'Monsters and magic!', shapes: 'Shapes!',
+    food: 'Food and sweets!', vehicles: 'Things that go!', nature: 'Nature and sky!', fun: 'Toys and fun!',
+    scenes: 'Picture scenes!', photos: 'Your photos!',
+  };
+  const topicUrl = (id) => (TOPICS[id] ? `audio/say/topic-${id}.mp3` : null);
+
   /** { say, fx } audio keys for a picture id, or null (your own photos say nothing). */
   function lookup(id) {
     if (!id) return null;
@@ -373,5 +382,5 @@
     return list;
   }
 
-  PK.speech = { SAY, FX, PICS, ROARS, lookup, urls };
+  PK.speech = { SAY, FX, PICS, ROARS, TOPICS, lookup, urls, topicUrl };
 })();

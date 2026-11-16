@@ -613,6 +613,12 @@
     if (!urls || !urls.length) return;
     const token = speechToken;
     Promise.all(urls.map(loadClip)).then((list) => {
+      if (token !== speechToken || !ctx) return;
+      // Right after the first tap the context may still be starting: wait for it instead of staying silent.
+      if (ctx.state === 'running') play(list);
+      else ctx.resume().then(() => play(list), () => {});
+    });
+    function play(list) {
       if (token !== speechToken || !ready()) return;
       const start = ctx.currentTime + 0.05;
       let t = start;
@@ -631,7 +637,7 @@
       duck.gain.cancelScheduledValues(start);
       duck.gain.setTargetAtTime(0.15, start - 0.05, 0.05); // fireworks and melodies step back for the voice
       duck.gain.setTargetAtTime(1, t, 0.3);
-    });
+    }
   }
 
   // ---------- small UI sounds ----------

@@ -33,6 +33,7 @@ const VOICE_FIX = { football: "[excited] It's a FOOT-BALL!" };
 /** What the voice is given: a cheerful tone and the thing in capitals, so the stress falls on it. */
 function voiceText(text, k) {
   if (VOICE_FIX[k]) return VOICE_FIX[k];
+  if (!text.startsWith("It's")) return `[excited] ${text.toUpperCase()}`; // topic names: all of it stressed
   const m = /^(It's (?:an? |the )?)(.+?)([!?.]*)$/.exec(text);
   return m ? `[excited] ${m[1]}${m[2].toUpperCase()}${m[3]}` : `[excited] ${text}`;
 }
@@ -59,10 +60,12 @@ for (const item of pictures.items) {
   if (e.fx) usedFx.add(e.fx);
 }
 for (const k of Object.keys(speech.SAY)) if (!usedSay.has(k)) problems.push(`phrase "${k}" is not used by any picture`);
+for (const t of ['random', 'photos', ...pictures.categories.map((c) => c.id)]) if (!speech.TOPICS[t]) problems.push(`no name for topic "${t}"`);
 for (const k of Object.keys(speech.FX)) if (!usedFx.has(k)) problems.push(`sound "${k}" is not used by any picture`);
 for (const k of only) {
   const [kind, name] = k.includes(':') ? k.split(':') : ['', k];
-  const known = kind === 'say' ? speech.SAY[name] : kind === 'fx' ? speech.FX[name] : speech.SAY[name] || speech.FX[name];
+  const topic = name.startsWith('topic-') && speech.TOPICS[name.slice(6)];
+  const known = kind === 'say' ? speech.SAY[name] || topic : kind === 'fx' ? speech.FX[name] : speech.SAY[name] || speech.FX[name] || topic;
   if (!known) problems.push(`--only: no phrase or sound called "${k}"`);
 }
 console.log(`${pictures.items.length} pictures, ${Object.keys(speech.SAY).length} phrases, ${Object.keys(speech.FX).length} sounds`);
@@ -81,6 +84,14 @@ if (!key) { console.error('No API key: put it in elevenlabs.txt or ELEVENLABS_AP
 
 const jobs = [];
 for (const [k, text] of Object.entries(speech.SAY)) {
+  const file = join(ROOT, 'audio/say', `${k}.mp3`);
+  if (remake('say', k) || !existsSync(file)) {
+    jobs.push({ kind: 'say', k, file, url: `https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=${SAY_FORMAT}`,
+      body: { text: voiceText(text, k), model_id: TTS_MODEL } });
+  }
+}
+for (const [t, text] of Object.entries(speech.TOPICS)) {
+  const k = `topic-${t}`;
   const file = join(ROOT, 'audio/say', `${k}.mp3`);
   if (remake('say', k) || !existsSync(file)) {
     jobs.push({ kind: 'say', k, file, url: `https://api.elevenlabs.io/v1/text-to-speech/${VOICE}?output_format=${SAY_FORMAT}`,
