@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Picture voices review</title>
+<style>
+  :root { --bg: #f6f3ec; --card: #fff; --ink: #1d2433; --muted: #6b7280; --line: #e5e0d5; --accent: #2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #15181f; --card: #1f2430; --ink: #eef0f4; --muted: #9aa3b2; --line: #2e3442; --accent: #60a5fa; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 1.3rem; margin: 0 0 4px; }
+  p.lead { margin: 0 0 14px; color: var(--muted); }
+  .bar { position: sticky; top: 0; z-index: 2; display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0 12px; background: var(--bg); }
+  .bar input { flex: 1 1 220px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; }
+  .bar button, .row button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; cursor: pointer; }
+  h2 { margin: 22px 0 8px; font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; margin-bottom: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+  .row.playing { outline: 2px solid var(--accent); }
+  .thumbs { display: flex; gap: 2px; }
+  .thumbs img { width: 34px; height: 34px; object-fit: contain; border-radius: 6px; background: #fff3; }
+  .text b { display: block; }
+  .text small { color: var(--muted); }
+  .btns { display: flex; gap: 6px; }
+  .missing { color: #dc2626; }
+</style>
+</head>
+<body>
+<h1>Picture voices</h1>
+<p class="lead">Every phrase and sound the timer can play. Tap ▶ to hear the name and the sound together. The grey names are the keys to quote when asking for a remake.</p>
+<div class="bar"><input id="q" type="search" placeholder="Filter: cat, roar, train…"><button id="all" type="button">Play all shown</button><button id="stop" type="button">Stop</button></div>
+<div id="list"></div>
+<script src="../js/library.js"></script>
+<script src="../js/pictures.js"></script>
+<script src="../js/speech.js"></script>
+<script>
+(function () {
+  const { pictures, speech } = window.PK;
+  const groups = new Map(); // "say fx" → { say, fx, cat, items[] }
+  for (const item of pictures.items) {
+    const e = speech.lookup(item.id);
+    if (!e) continue;
+    const k = `${e.say} ${e.fx || ''}`;
+    if (!groups.has(k)) groups.set(k, { say: e.say, fx: e.fx, cat: item.cat, items: [] });
+    groups.get(k).items.push(item);
+  }
+  const names = Object.fromEntries(pictures.categories.map((c) => [c.id, c.name]));
+  const audio = new Audio();
+  let queue = [];
+  let current = null;
+  function playNext() {
+    if (current) current.row.classList.remove('playing');
+    current = queue.shift() || null;
+    if (!current) return;
+    current.row.classList.add('playing');
+    audio.src = current.src;
+    audio.play().catch(playNext);
+  }
+  audio.addEventListener('ended', () => setTimeout(playNext, current && current.gap ? 150 : 600));
+  audio.addEventListener('error', playNext);
+  function play(list) { audio.pause(); if (current) current.row.classList.remove('playing'); queue = list; playNext(); }
+  const clips = (g, row) => [
+    { src: `../audio/say/${g.say}.mp3`, row, gap: !!g.fx },
+    ...(g.fx ? [{ src: `../audio/fx/${g.fx}.mp3`, row }] : []),
+  ];
+
+  const list = document.getElementById('list');
+  const rows = [];
+  let lastCat = '';
+  for (const g of [...groups.values()].sort((a, b) => pictures.categories.findIndex((c) => c.id === a.cat) - pictures.categories.findIndex((c) => c.id === b.cat))) {
+    if (g.cat !== lastCat) { const h = document.createElement('h2'); h.textContent = names[g.cat] || g.cat; list.append(h); lastCat = g.cat; }
+    const row = document.createElement('div');
+    row.className = 'row';
+    const thumbs = document.createElement('div');
+    thumbs.className = 'thumbs';
+    g.items.filter((it, i, all) => all.findIndex((x) => x.name === it.name) === i).slice(0, 4).forEach((it) => {
+      const img = document.createElement('img');
+      const src = pictures.src(it.id);
+      img.src = src.startsWith('data:') ? src : '../' + src;
+      img.alt = it.name;
+      img.title = it.name;
+      thumbs.append(img);
+    });
+    const text = document.createElement('div');
+    text.className = 'text';
+    const fx = g.fx ? speech.FX[g.fx][1].split(',')[0] : 'no sound';
+    text.innerHTML = `<b></b><small></small>`;
+    text.querySelector('b').textContent = speech.SAY[g.say];
+    text.querySelector('small').textContent = `say/${g.say}${g.fx ? ' · fx/' + g.fx : ''} — ${fx} — ${g.items.length} picture${g.items.length === 1 ? '' : 's'}`;
+    const btns = document.createElement('div');
+    btns.className = 'btns';
+    const both = document.createElement('button');
+    both.type = 'button';
+    both.textContent = '▶';
+    both.title = 'Name and sound';
+    both.addEventListener('click', () => play(clips(g, row)));
+    btns.append(both);
+    if (g.fx) {
+      const only = document.createElement('button');
+      only.type = 'button';
+      only.textContent = '♪';
+      only.title = 'Sound only';
+      only.addEventListener('click', () => play([{ src: `../audio/fx/${g.fx}.mp3`, row }]));
+      btns.append(only);
+    }
+    row.append(thumbs, text, btns);
+    list.append(row);
+    rows.push({ row, g, hay: `${speech.SAY[g.say]} ${g.say} ${g.fx || ''} ${g.items.map((i) => i.name).join(' ')}`.toLowerCase() });
+  }
+  document.getElementById('q').addEventListener('input', (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    rows.forEach((r) => { r.row.hidden = !!q && !r.hay.includes(q); });
+  });
+  document.getElementById('all').addEventListener('click', () => play(rows.filter((r) => !r.row.hidden).flatMap((r) => clips(r.g, r.row))));
+  document.getElementById('stop').addEventListener('click', () => { queue = []; audio.pause(); if (current) current.row.classList.remove('playing'); current = null; });
+})();
+</script>
+</body>
+</html>

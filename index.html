@@ -22,6 +22,7 @@
 <script defer src="js/timer.js"></script>
 <script defer src="js/library.js"></script>
 <script defer src="js/pictures.js"></script>
+<script defer src="js/speech.js"></script>
 <script defer src="js/sounds.js"></script>
 <script defer src="js/sky.js"></script>
 <script defer src="js/dial.js"></script>
@@ -273,6 +274,10 @@
             </div>
             <label class="slider" for="setEndVol"><span>Volume</span><input type="range" id="setEndVol" min="0" max="1" step="0.05" data-setting="endVolume" data-type="number"></label>
           </div>
+          <label class="set-row" for="setSpeak">
+            <span class="set-text"><b>Say what the picture is</b><small>“It's a cat!” and a meow when time is up, and again when the picture is tapped</small></span>
+            <input class="switch" type="checkbox" id="setSpeak" data-setting="speak">
+          </label>
           <label class="set-row" for="setRepeat">
             <span class="set-text"><b>Keep celebrating until Done</b><small>Fireworks, flying pictures and the spinning picture go on until someone taps Done</small></span>
             <input class="switch" type="checkbox" id="setRepeat" data-setting="repeatEnd">

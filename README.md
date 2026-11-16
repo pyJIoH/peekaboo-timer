@@ -38,6 +38,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 - **Fireworks finale**: the sky dims, rockets whistle up and burst into glowing sparks with booms and crackle. The revealed picture spins and stays clear of the sparks.
   Little copies of the revealed picture burst out of the circle and tumble down with the sparks; tap the picture afterwards for another burst.
   Other endings: fanfare, chimes, magic, cuckoo, beeps. By default the whole celebration (fireworks, flying pictures, spinning picture) goes on and keeps the screen on until someone taps *Done*; it can be set to play once.
+- **The picture says what it is**: when time is up a friendly voice says "It's a cat!" and then the cat meows; a train whistles, a monster roars, a plane flies by. Every cat is "a cat" and every monster "a monster", so the words stay simple. Tap the picture to hear it again. Can be turned off in Settings. Your own photos stay quiet.
 - The picture stays on screen until someone taps *Done*; tap it to spin it again. *Again* restarts the same timer.
 - **Routines** (presets) such as *Brush teeth 2:00*: tap one to start it. Save, update, delete, restore the examples.
 - Phone first: the whole timer always fits the screen with no scrolling, in portrait and landscape (checked from 320 px phones to tablets). Every button is at least 44 × 44 px; the ■ button stops at once, without a question. Controls fade while the timer runs.
@@ -52,7 +53,8 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 | Platform | Progressive Web App (plain HTML/CSS/JS) | One codebase for every OS; installable; offline via service worker |
 | Language | Vanilla JavaScript, no framework, no build | Instant load, nothing to compile or update, opens straight from disk |
 | Timing | Wall-clock end time (`Date.now`) + worker heartbeat | Stays exact when the tab is in the background, the phone sleeps or the page reloads |
-| Sound | Web Audio API synthesis, ticks scheduled on the audio clock | No audio files; steady ticks even when the page is busy; separate tick/end volumes |
+| Sound | Web Audio API synthesis, ticks scheduled on the audio clock | Steady ticks even when the page is busy; separate tick/end volumes |
+| Picture voices | Recorded MP3 clips made once with ElevenLabs (`tools/make-audio.mjs`) | Same voice every time, no network calls from the app; a picture's clips load when the timer starts and are cached for offline |
 | Graphics | SVG dial and SVG illustrations | Sharp at any size, from a phone to a classroom projector |
 | Storage | `localStorage` for settings/routines, IndexedDB for photos | Private, on-device, no server |
 
@@ -66,6 +68,9 @@ js/timer.js           countdown model (pure logic)
 js/dial.js            dial drawing, colours, last-seconds badge
 js/pictures.js        built-in scenes, monster and shape generators, picture catalog
 js/library.js         list of the downloaded pictures (generated)
+js/speech.js          what each picture says and its sound (phrases, sound prompts, picture map)
+audio/say/, audio/fx/ the spoken names and the picture sounds (made by tools/make-audio.mjs)
+tools/make-audio.mjs  makes missing clips with ElevenLabs; key in elevenlabs.txt (not in git)
 library/              downloaded pictures + LICENSES.md (sources and licence texts)
 js/sounds.js          sound engine
 js/sky.js             time-of-day sky

@@ -1,12 +1,13 @@
-/* Peekaboo Timer — sound engine. Every sound is synthesised with the Web Audio API.
-   Ticks are scheduled on the audio clock (look-ahead scheduler), so they stay steady
-   even when the page is busy or in a background tab. */
+/* Peekaboo Timer — sound engine. Every sound is synthesised with the Web Audio API, except the
+   recorded picture names and sounds ("It's a cat!", a meow). Ticks are scheduled on the audio
+   clock (look-ahead scheduler), so they stay steady even when the page is busy or in a background tab. */
 (function () {
   'use strict';
   const PK = (window.PK = window.PK || {});
 
   let ctx = null;
   let master, tickBus, endBus, uiBus, reverbSend, noiseBuf;
+  let duck, speechBus; // duck: the end sounds dip while a picture speaks
   const vol = { tick: 0.85, end: 0.9, muted: false };
 
   // Ticks waiting to play: { when, voice }
@@ -74,7 +75,11 @@
     tickBus = ctx.createGain();
     tickBus.connect(master);
     endBus = ctx.createGain();
-    endBus.connect(master);
+    duck = ctx.createGain();
+    endBus.connect(duck);
+    duck.connect(master);
+    speechBus = ctx.createGain();
+    speechBus.connect(master);
     uiBus = ctx.createGain();
     uiBus.gain.value = 0.5;
     uiBus.connect(master);
@@ -83,7 +88,7 @@
     conv.buffer = impulse(2.4, 3.2);
     reverbSend = ctx.createGain();
     reverbSend.gain.value = 0.32;
-    endBus.connect(reverbSend);
+    duck.connect(reverbSend);
     reverbSend.connect(conv);
     conv.connect(master);
 
@@ -111,6 +116,7 @@
     const t = ctx.currentTime;
     tickBus.gain.setTargetAtTime(Math.pow(vol.tick, 1.3) * 1.7, t, 0.02);
     endBus.gain.setTargetAtTime(Math.pow(vol.end, 1.4) * 1.1, t, 0.02);
+    speechBus.gain.setTargetAtTime(Math.pow(vol.end, 1.2) * 1.8, t, 0.02);
     master.gain.setTargetAtTime(vol.muted ? 0 : 1, t, 0.02);
   }
 
@@ -527,6 +533,107 @@
     fxVoice = null;
   }
 
+  // ---------- picture names and sounds (recorded clips) ----------
+  const clips = new Map(); // url → Promise<{ buffer, offset, duration } | null>
+  let speechSources = [];
+  let speechToken = 0;
+
+  function decode(c, data) {
+    return new Promise((resolve) => {
+      try {
+        const p = c.decodeAudioData(data, resolve, () => resolve(null)); // callback form for older Safari
+        if (p && p.catch) p.catch(() => resolve(null));
+      } catch (e) { resolve(null); }
+    });
+  }
+
+  /** Where the sound really starts and ends, so the name and the sound follow each other closely. */
+  function trimmed(buffer) {
+    const data = buffer.getChannelData(0);
+    const quiet = 0.012;
+    let a = 0;
+    let b = data.length - 1;
+    while (a < b && Math.abs(data[a]) < quiet) a++;
+    while (b > a && Math.abs(data[b]) < quiet) b--;
+    const pad = Math.round(buffer.sampleRate * 0.03);
+    a = Math.max(0, a - pad);
+    b = Math.min(data.length - 1, b + pad * 3);
+    // Even out loudness: the recordings differ by more than 20 dB. Aim every clip at the same
+    // level over its loud part, without boosting a quiet one into distortion.
+    let sum = 0;
+    let n = 0;
+    let peak = 0;
+    for (let i = a; i <= b; i++) {
+      const v = Math.abs(data[i]);
+      if (v > peak) peak = v;
+      if (v >= quiet) { sum += v * v; n++; }
+    }
+    const rms = n ? Math.sqrt(sum / n) : 0;
+    const gain = rms ? Math.max(0.35, Math.min(4, 0.25 / rms, 1.1 / Math.max(peak, 1e-3))) : 1;
+    return { buffer, offset: a / buffer.sampleRate, duration: Math.max(0.05, (b - a) / buffer.sampleRate), gain };
+  }
+
+  /** Fetches and decodes a clip once; a failed load (offline) is tried again next time. */
+  function loadClip(url) {
+    if (clips.has(url)) return clips.get(url);
+    const job = fetch(url)
+      .then((res) => (res.ok ? res.arrayBuffer() : null))
+      .then((data) => {
+        if (!data) return null;
+        const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+        const c = ctx || (OAC ? new OAC(1, 1, 44100) : null);
+        return c ? decode(c, data) : null;
+      })
+      .then((buffer) => (buffer ? trimmed(buffer) : null))
+      .catch(() => null)
+      .then((clip) => { if (!clip) clips.delete(url); return clip; });
+    clips.set(url, job);
+    return job;
+  }
+
+  /** Loads clips ahead of time (when the timer starts), so they are ready the moment time is up. */
+  function preloadClips(urls) {
+    (urls || []).forEach(loadClip);
+  }
+
+  function stopSpeech() {
+    speechToken++;
+    speechSources.forEach((s) => { try { s.stop(); } catch (e) { /* ignore */ } });
+    speechSources = [];
+    if (ctx && duck) {
+      const t = ctx.currentTime;
+      duck.gain.cancelScheduledValues(t);
+      duck.gain.setTargetAtTime(1, t, 0.1);
+    }
+  }
+
+  /** Plays the clips one after another ("It's a cat!", then a meow), with the end sounds dipped under them. */
+  function speak(urls) {
+    stopSpeech();
+    if (!urls || !urls.length) return;
+    const token = speechToken;
+    Promise.all(urls.map(loadClip)).then((list) => {
+      if (token !== speechToken || !ready()) return;
+      const start = ctx.currentTime + 0.05;
+      let t = start;
+      list.forEach((clip) => {
+        if (!clip) return;
+        const s = ctx.createBufferSource();
+        s.buffer = clip.buffer;
+        const g = ctx.createGain();
+        g.gain.value = clip.gain;
+        s.connect(g).connect(speechBus);
+        s.start(t, clip.offset, clip.duration);
+        speechSources.push(s);
+        t += clip.duration + 0.15;
+      });
+      if (t === start) return;
+      duck.gain.cancelScheduledValues(start);
+      duck.gain.setTargetAtTime(0.15, start - 0.05, 0.05); // fireworks and melodies step back for the voice
+      duck.gain.setTargetAtTime(1, t, 0.3);
+    });
+  }
+
   // ---------- small UI sounds ----------
   function startChirp() {
     if (!ready()) return;
@@ -640,6 +747,9 @@
     startChirp,
     boing,
     pops,
+    preloadClips,
+    speak,
+    stopSpeech,
     wheelClick,
     previewTick,
     previewEnd,

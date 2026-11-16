@@ -20,6 +20,7 @@
     endSound: 'fireworks',
     endVolume: 0.9,
     repeatEnd: true, // fireworks, spinning and flying pictures go on until Done
+    speak: true, // the picture says what it is ("It's a cat!") and makes its sound
     sky: 'auto',
     theme: 'system',
     wakeLock: true,
@@ -545,6 +546,7 @@
     setView('run');
     const m = timer.meta;
     showPicture(m.picture);
+    if (settings.speak) PK.sound.preloadClips(PK.speech.urls(m.picture));
     dial.setSecret(settings.reveal === 'surprise');
     setLabel(m.label || '');
     updatePauseBtn();
@@ -706,6 +708,14 @@
   let wakeReleaseTimer = 0;
   let celebration = 0; // id of the current celebration, so a stale one stops on its own
   let spinTimer = 0;
+  let sayTimer = 0;
+
+  /** "It's a cat!" and a meow, if the picture has them and voices are on. */
+  function sayPicture() {
+    const urls = settings.speak ? PK.speech.urls(timer.meta.picture) : [];
+    if (urls.length) PK.sound.speak(urls);
+    return urls.length > 0;
+  }
 
   function finish() {
     if (timer.status !== 'running' && timer.status !== 'paused') return;
@@ -741,11 +751,15 @@
       });
     };
     run(true);
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => { if (live()) sayPicture(); }, 600); // as the picture spins into view
   }
 
   function stopCelebration() {
     celebration++;
     clearTimeout(spinTimer);
+    clearTimeout(sayTimer);
+    PK.sound.stopSpeech();
     PK.sound.stopEnd();
     PK.fireworks.stop();
   }
@@ -1080,7 +1094,7 @@
   dialEl.addEventListener('click', () => {
     if (view === 'done') {
       dial.spin();
-      PK.sound.boing();
+      if (!sayPicture()) PK.sound.boing();
       PK.fireworks.updateHole(dialHole());
       PK.fireworks.pictureBurst(12);
     }

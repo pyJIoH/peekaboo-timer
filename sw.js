@@ -1,6 +1,6 @@
 /* Peekaboo Timer — service worker. Network first for the app's own files (always fresh when
    online), cache fallback so it keeps working offline. Fonts are cached on first use. */
-const VERSION = 'peekaboo-v8';
+const VERSION = 'peekaboo-v9';
 const FONTS = 'peekaboo-fonts';
 const SHELL = [
   './',
@@ -10,6 +10,7 @@ const SHELL = [
   'js/timer.js',
   'js/library.js',
   'js/pictures.js',
+  'js/speech.js',
   'js/sounds.js',
   'js/sky.js',
   'js/dial.js',
