@@ -31,13 +31,13 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
   - 472 emoji-style pictures in two art styles (Microsoft Fluent Emoji, Google Noto Emoji): animals, fairies, superheroes, robots, aliens, food and sweets, vehicles, nature and weather, toys, sports, music, party things.
   - 48 friendly monsters and 16 shape friends (circle, star, heart, triangle...) drawn by the app's own code, so they work offline.
   - 8 illustrated scenes, a plain clock face, and **your own photos** (unlimited, stored only on the device).
-  - Settings → *Surprise pictures come from* picks which groups are used. The picture chooser shows everything, grouped.
+  - Settings → *Surprise pictures come from* picks which groups are used. The picture chooser button is hidden for now, so the child cannot pick the picture; every start is a surprise.
   - When time is up the picture spins and its name appears ("Jellyfish!").
 - Green → amber → red cover, or a fixed colour. Optional **blurry until the end** mode.
 - **Tick-tock twice a second** (clock, wood block, bubble or off; once a second if you prefer) with its own volume, plus countdown beeps for the last 5 seconds.
 - **Fireworks finale**: the sky dims, rockets whistle up and burst into glowing sparks with booms and crackle. The revealed picture spins and stays clear of the sparks.
   Little copies of the revealed picture burst out of the circle and tumble down with the sparks; tap the picture afterwards for another burst.
-  Other endings: fanfare, chimes, magic, cuckoo, beeps. Optional repeat until *Done*.
+  Other endings: fanfare, chimes, magic, cuckoo, beeps. By default the whole celebration (fireworks, flying pictures, spinning picture) goes on and keeps the screen on until someone taps *Done*; it can be set to play once.
 - The picture stays on screen until someone taps *Done*; tap it to spin it again. *Again* restarts the same timer.
 - **Routines** (presets) such as *Brush teeth 2:00*: tap one to start it. Save, update, delete, restore the examples.
 - Phone first: the whole timer always fits the screen with no scrolling, in portrait and landscape (checked from 320 px phones to tablets). Every button is at least 44 × 44 px; the ■ button stops at once, without a question. Controls fade while the timer runs.

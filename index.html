@@ -114,7 +114,8 @@
       <div class="bump" id="bump" aria-hidden="true"></div>
 
       <div class="ctl-row" id="ctlRow">
-        <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Hidden picture"></button>
+        <!-- Picture choice is hidden for now (every start is a surprise); remove coin-ghost to bring it back. -->
+        <button class="coin coin-pic coin-ghost slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Hidden picture" tabindex="-1"></button>
         <button class="coin coin-gold slot-l v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
           <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
         </button>
@@ -273,7 +274,7 @@
             <label class="slider" for="setEndVol"><span>Volume</span><input type="range" id="setEndVol" min="0" max="1" step="0.05" data-setting="endVolume" data-type="number"></label>
           </div>
           <label class="set-row" for="setRepeat">
-            <span class="set-text"><b>Keep celebrating until Done</b><small>Repeats the ending until someone taps Done</small></span>
+            <span class="set-text"><b>Keep celebrating until Done</b><small>Fireworks, flying pictures and the spinning picture go on until someone taps Done</small></span>
             <input class="switch" type="checkbox" id="setRepeat" data-setting="repeatEnd">
           </label>
         </div>

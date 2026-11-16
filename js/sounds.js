@@ -17,7 +17,6 @@
   // End sounds
   let endVoice = null;
   let endRepeat = 0;
-  let endRepeatUntil = 0;
   let endJob = null; // the end melody being played: { name, repeat, doneAt (audio clock) }
   let fxVoice = null;
   let previewTimers = [];
@@ -163,7 +162,7 @@
     } catch (e) { /* ignore */ }
     if (!ensure()) return null;
     // An end melody the old context never got to finish starts again on the new one.
-    if (endJob && (unfinished || (endJob.repeat && Date.now() < endRepeatUntil))) playEndPass();
+    if (endJob && (unfinished || endJob.repeat)) playEndPass();
     notify();
     return ctx;
   }
@@ -488,7 +487,6 @@
     if (!ensure()) return;
     if (ctx.state !== 'running') ctx.resume().catch(() => {});
     if (!ENDS[name]) return;
-    endRepeatUntil = Date.now() + 3 * 60 * 1000; // never nag for more than 3 minutes
     endJob = { name, repeat: !!(opts && opts.repeat), doneAt: 0 };
     playEndPass();
   }
@@ -502,7 +500,7 @@
     const t = ctx.currentTime + 0.05;
     const dur = ENDS[job.name](t, v);
     job.doneAt = t + dur;
-    if (job.repeat && Date.now() < endRepeatUntil) endRepeat = setTimeout(playEndPass, (dur + 1.4) * 1000);
+    if (job.repeat) endRepeat = setTimeout(playEndPass, (dur + 1.4) * 1000); // until Done
   }
 
   function fadeOut(v, sec) {

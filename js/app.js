@@ -6,7 +6,7 @@
 
   const SEC = 1000;
   const MIN = 60 * SEC;
-  const SETTINGS_VERSION = 3;
+  const SETTINGS_VERSION = 4;
 
   const DEFAULT_SETTINGS = {
     digits: true,
@@ -19,7 +19,7 @@
     pips: true,
     endSound: 'fireworks',
     endVolume: 0.9,
-    repeatEnd: false,
+    repeatEnd: true, // fireworks, spinning and flying pictures go on until Done
     sky: 'auto',
     theme: 'system',
     wakeLock: true,
@@ -53,6 +53,8 @@
   }
   // v3: the gold coins follow the length of the timer instead of a fixed step.
   if (settingsFrom < 3) settings.step = 'auto';
+  // v4: the celebration keeps going until a grown-up taps Done.
+  if (settingsFrom < 4) settings.repeatEnd = true;
   if (settingsFrom < SETTINGS_VERSION) {
     settings.v = SETTINGS_VERSION;
     store.set('settings', settings);
@@ -63,13 +65,20 @@
   if (!Array.isArray(routines)) routines = EXAMPLE_ROUTINES.map((r) => Object.assign({}, r));
   // Routines saved before the limit was lowered still show and run as the longest allowed time.
   routines.forEach((r) => { if (r.duration > PK.Timer.MAX_MINUTES * MIN) r.duration = PK.Timer.MAX_MINUTES * MIN; });
-  if (setup.v !== 2) {
+  const setupFrom = Number(setup.v) || 0;
+  if (setupFrom < 2) {
     // The big picture library arrived: every start is a surprise by default.
     setup.picture = 'random';
-    setup.v = 2;
-    store.set('setup', setup);
     routines.forEach((r) => { if (String(r.id).startsWith('ex-')) r.picture = 'random'; });
     store.set('presets', routines);
+  }
+  if (setupFrom < 3) {
+    // v3: the picture button is hidden, so a picture chosen before could never be changed back.
+    setup.picture = 'random';
+  }
+  if (setupFrom < 3) {
+    setup.v = 3;
+    store.set('setup', setup);
   }
   const timer = PK.Timer.restore(store.get('timer', null));
   let photos = []; // { id, url }
@@ -523,8 +532,7 @@
   function startTimer(opts) {
     if (!(opts.duration >= SEC)) return;
     PK.sound.unlock();
-    PK.sound.stopEnd();
-    PK.fireworks.stop();
+    stopCelebration();
     const chosen = opts.picture;
     const pic = chosen === 'random' ? pickRandom() : (pictureExists(chosen) ? chosen : 'rocket');
     timer.start(opts.duration, { picture: pic, chosen, label: opts.label || '', routineId: opts.routineId || null });
@@ -696,7 +704,8 @@
 
   // ---------- done ----------
   let wakeReleaseTimer = 0;
-  let celebrateUntil = 0;
+  let celebration = 0; // id of the current celebration, so a stale one stops on its own
+  let spinTimer = 0;
 
   function finish() {
     if (timer.status !== 'running' && timer.status !== 'paused') return;
@@ -712,23 +721,33 @@
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
 
+  // Fireworks, little pictures flying out and a spinning picture. With "Keep celebrating" on
+  // (the default) it goes round and round until someone taps Done or Again.
   function celebrate() {
     const name = settings.endSound;
     const fwGain = name === 'fireworks' ? 1 : 0.35;
     if (name !== 'fireworks') PK.sound.playEnd(name, { repeat: settings.repeatEnd });
-    celebrateUntil = Date.now() + 3 * MIN;
-    const run = () => {
-      const r = dialEl.getBoundingClientRect();
+    const id = ++celebration;
+    const live = () => view === 'done' && id === celebration;
+    const run = (first) => {
+      if (!first) dial.spin();
+      clearTimeout(spinTimer);
+      if (settings.repeatEnd) spinTimer = setTimeout(() => { if (live()) dial.spin(); }, 2800);
       PK.fireworks.show({
-        hole: { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 },
+        hole: dialHole(),
         onLaunch: (pan, dur) => PK.sound.fwLaunch(pan, dur, fwGain),
         onBurst: (pan, big) => PK.sound.fwBoom(pan, big, fwGain),
-        onEnd: () => {
-          if (view === 'done' && settings.repeatEnd && name === 'fireworks' && Date.now() < celebrateUntil) run();
-        },
+        onEnd: () => { if (live() && settings.repeatEnd) run(false); },
       });
     };
-    run();
+    run(true);
+  }
+
+  function stopCelebration() {
+    celebration++;
+    clearTimeout(spinTimer);
+    PK.sound.stopEnd();
+    PK.fireworks.stop();
   }
 
   function showDone(withCelebration) {
@@ -752,14 +771,14 @@
       notifyDone();
     }
     clearTimeout(wakeReleaseTimer);
-    wakeReleaseTimer = setTimeout(releaseWake, 2 * MIN);
+    // A celebration that goes on until Done keeps the screen on; otherwise let it sleep soon.
+    if (!(withCelebration && settings.repeatEnd)) wakeReleaseTimer = setTimeout(releaseWake, 2 * MIN);
     try { $('#doneBtn').focus({ preventScroll: true }); } catch (e) { /* ignore */ }
   }
 
   function goSetup() {
-    PK.sound.stopEnd();
+    stopCelebration();
     PK.sound.cancelTicks();
-    PK.fireworks.stop();
     beat.stop();
     timer.reset();
     saveTimer();
