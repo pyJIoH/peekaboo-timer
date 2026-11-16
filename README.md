@@ -31,7 +31,8 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
   - 472 emoji-style pictures in two art styles (Microsoft Fluent Emoji, Google Noto Emoji): animals, fairies, superheroes, robots, aliens, food and sweets, vehicles, nature and weather, toys, sports, music, party things.
   - 48 friendly monsters and 16 shape friends (circle, star, heart, triangle...) drawn by the app's own code, so they work offline.
   - 8 illustrated scenes, a plain clock face, and **your own photos** (unlimited, stored only on the device).
-  - Settings → *Surprise pictures come from* picks which groups are used. The picture chooser button is hidden for now, so the child cannot pick the picture; every start is a surprise.
+  - The **?** coin opens topics, not single pictures: *Surprise me*, Animals, Monsters and magic, Shapes, Food and sweets, Things that go, Nature and sky, Toys and fun, Picture scenes (and Your photos when there are some). The child picks a topic; the picture inside it stays a surprise, and each topic deals its own deck without repeats. The coin shows the topic's picture, and routines remember a topic.
+  - Settings → *Surprise pictures come from* picks which groups *Surprise me* uses, and only those groups are offered as topics.
   - When time is up the picture spins and its name appears ("Jellyfish!").
 - Green → amber → red cover, or a fixed colour. Optional **blurry until the end** mode.
 - **Tick-tock twice a second** (clock, wood block, bubble or off; once a second if you prefer) with its own volume, plus countdown beeps for the last 5 seconds.
@@ -43,6 +44,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 - **Routines** (presets) such as *Brush teeth 2:00*: tap one to start it. Save, update, delete, restore the examples.
 - Phone first: the whole timer always fits the screen with no scrolling, in portrait and landscape (checked from 320 px phones to tablets). Every button is at least 44 × 44 px; the ■ button stops at once, without a question. Controls fade while the timer runs.
 - The sky follows the real clock: sunrise, daytime with the sun moving across, sunset, and night with moon and stars. It can also be fixed.
+- Updates itself: app files are always checked with the server, and a new version loads on its own on the setup screen (never during a countdown or the celebration). Settings → About shows the version number.
 - Keeps the screen awake while running, optional notification when time is up in the background, remaining time and a progress pie in the browser tab, survives reloads and works across tabs.
 - Light and dark menus, keyboard shortcuts, screen-reader labels, reduced-motion support.
 

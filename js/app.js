@@ -85,6 +85,7 @@
   let photos = []; // { id, url }
   let photosLoaded = false;
   let view = 'setup';
+  let updateReady = false; // a new version is waiting for the setup screen (see "updates")
 
   const saveSettings = () => store.set('settings', settings);
   const saveSetup = () => store.set('setup', setup);
@@ -101,29 +102,40 @@
     pauseBtn: $('#pauseBtn'), stopBtn: $('#stopBtn'), minusCoin: $('#minusCoin'), plusCoin: $('#plusCoin'),
     muteBtn: $('#muteBtn'), digitsBtn: $('#digitsBtn'), fullBtn: $('#fullBtn'), installBtn: $('#installBtn'),
     soundHint: $('#soundHint'), toast: $('#toast'), picker: $('#picker'), photoInput: $('#photoInput'),
-    pictureSheet: $('#pictureSheet'), routineSheet: $('#routineSheet'), settingsSheet: $('#settingsSheet'),
+    pictureSheet: $('#pictureSheet'), topicSheet: $('#topicSheet'), routineSheet: $('#routineSheet'), settingsSheet: $('#settingsSheet'),
   };
 
   // ---------- pictures ----------
   const photoUrl = (id) => { const p = photos.find((x) => x.id === id); return p ? p.url : null; };
   const isPhoto = (id) => typeof id === 'string' && id.startsWith('photo-');
-  const pictureExists = (id) => id === 'random' || PK.pictures.has(id) || !!photoUrl(id) || (isPhoto(id) && !photosLoaded);
+  // Topics: "random:animals" is a surprise from one group only; plain "random" uses every group.
+  const topicOf = (id) => (typeof id === 'string' && id.startsWith('random:') ? id.slice(7) : null);
+  const isRandom = (id) => id === 'random' || !!topicOf(id);
+  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'food', 'vehicles', 'nature', 'fun', 'scenes', 'photos'];
+  const TOPIC_ICON = { animals: 'f:cat-face', monsters: 'm:3', shapes: 's:star', food: 'f:cupcake', vehicles: 'f:rocket',
+    nature: 'f:sunflower', fun: 'f:balloon', scenes: 'ocean' };
+  const topicName = (t) => (t === 'photos' ? 'Your photos' : (PK.pictures.categories.find((c) => c.id === t) || {}).name || 'Surprise me');
+  const topicIcon = (t) => (t === 'photos' ? (photos[0] && photos[0].id) || 'random' : TOPIC_ICON[t] || 'random');
+  const pictureExists = (id) => id === 'random' || TOPIC_ORDER.includes(topicOf(id)) || PK.pictures.has(id) || !!photoUrl(id) || (isPhoto(id) && !photosLoaded);
   const pictureSrc = (id) => photoUrl(id) || PK.pictures.src(PK.pictures.has(id) ? id : 'rocket');
   const backdropFor = (id) => (isPhoto(id) ? '' : PK.pictures.backdrop(id));
   const showPicture = (id) => dial.setPicture(pictureSrc(id), backdropFor(id));
   function pictureLabel(id) {
     if (id === 'random') return 'Surprise me';
+    if (topicOf(id)) return topicName(topicOf(id));
     if (isPhoto(id)) return 'Your photo';
     return PK.pictures.name(id) || 'Picture';
   }
   function picturePhrase(id) {
     if (id === 'random') return 'a surprise picture';
+    if (topicOf(id)) return `a surprise from ${topicName(topicOf(id)).toLowerCase()}`;
     if (isPhoto(id)) return 'your photo';
     return `the ${(PK.pictures.name(id) || 'picture').toLowerCase()} picture`;
   }
 
   /** A round thumbnail for any picture (sticker art gets its coloured backdrop). */
   function thumb(id, className) {
+    if (topicOf(id)) return thumb(topicIcon(topicOf(id)), className); // a topic shows its picture
     const span = document.createElement('span');
     span.className = className;
     if (id === 'random') {
@@ -146,8 +158,8 @@
 
   // "Surprise me": a shuffled deck, so every picture shows once before any repeats.
   const ALL_GROUPS = PK.pictures.categories.map((c) => c.id).concat('photos');
-  function surprisePool() {
-    const groups = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
+  function surprisePool(topic) {
+    const groups = new Set(topic ? [topic] : Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
     let pool = PK.pictures.items.filter((i) => i.surprise && groups.has(i.cat)).map((i) => i.id);
     if (groups.has('photos')) pool = pool.concat(photos.map((p) => p.id));
     return pool.length ? pool : PK.pictures.items.filter((i) => i.surprise).map((i) => i.id);
@@ -159,16 +171,17 @@
     }
     return arr;
   }
-  function pickRandom() {
-    const pool = surprisePool();
+  function pickRandom(topic) {
+    const pool = surprisePool(topic);
     const inPool = new Set(pool);
-    let deck = (store.get('deck', []) || []).filter((id) => inPool.has(id));
+    const deckKey = topic ? `deck:${topic}` : 'deck'; // each topic deals from its own deck
+    let deck = (store.get(deckKey, []) || []).filter((id) => inPool.has(id));
     if (!deck.length) {
       deck = shuffle(pool.slice());
       if (deck.length > 1 && deck[0] === store.get('lastRandom', null)) deck.push(deck.shift());
     }
     const pick = deck.shift();
-    store.set('deck', deck);
+    store.set(deckKey, deck);
     store.set('lastRandom', pick);
     prefetch(deck[0]);
     return pick;
@@ -266,7 +279,7 @@
     const b = els.picBtn;
     b.innerHTML = '';
     b.style.backgroundImage = '';
-    if (setup.picture === 'random') {
+    if (setup.picture === 'random' || topicIcon(topicOf(setup.picture)) === 'random') {
       b.classList.add('is-random');
       b.innerHTML = '<span aria-hidden="true">?</span>';
     } else {
@@ -285,7 +298,7 @@
     dial.setFraction(1);
     dial.setColor(coverColor(1));
     dial.setCount(null);
-    if (setup.picture === 'random') dial.setPicture(PK.pictures.src('plain'), '');
+    if (isRandom(setup.picture)) dial.setPicture(PK.pictures.src('plain'), '');
     else showPicture(setup.picture);
     syncWheels();
     updateSetupMeta();
@@ -387,12 +400,32 @@
     choosePicture(t.dataset.id);
   });
 
+  // ---------- topic sheet (the "?" coin): a child picks a topic, the picture stays a surprise ----------
+  // The full picture chooser above (buildPictureGrid) is kept but not opened from anywhere for now.
+  function shownTopics() {
+    const on = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
+    return TOPIC_ORDER.filter((t) => on.has(t) && (t === 'photos' ? photos.length > 0 : PK.pictures.items.some((i) => i.cat === t && i.surprise)));
+  }
+  function buildTopicGrid() {
+    const host = $('#topicGrid');
+    host.innerHTML = '';
+    host.appendChild(tile('random', 'Surprise me'));
+    shownTopics().forEach((t) => host.appendChild(tile(`random:${t}`, topicName(t))));
+    $$('.pic-tile[data-id]', host).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === setup.picture)));
+  }
+  $('#topicGrid').addEventListener('click', (e) => {
+    const t = e.target.closest('.pic-tile');
+    if (!t) return;
+    closeSheet(els.topicSheet);
+    choosePicture(t.dataset.id);
+  });
+
   function choosePicture(id) {
     setup.picture = id;
     setup.label = '';
     saveSetup();
     renderSetup();
-    if (id !== 'random') setTimeout(peek, 120);
+    if (!isRandom(id)) setTimeout(peek, 120);
   }
 
   async function deletePhoto(id, btn) {
@@ -535,7 +568,7 @@
     PK.sound.unlock();
     stopCelebration();
     const chosen = opts.picture;
-    const pic = chosen === 'random' ? pickRandom() : (pictureExists(chosen) ? chosen : 'rocket');
+    const pic = isRandom(chosen) ? pickRandom(topicOf(chosen)) : (pictureExists(chosen) ? chosen : 'rocket');
     timer.start(opts.duration, { picture: pic, chosen, label: opts.label || '', routineId: opts.routineId || null });
     saveTimer();
     enterRun();
@@ -800,6 +833,7 @@
     clearTimeout(wakeReleaseTimer);
     setView('setup');
     renderSetup();
+    reloadIfIdle();
   }
 
   $('#againBtn').addEventListener('click', () => {
@@ -911,6 +945,7 @@
   }
   const anySheetOpen = () => $$('dialog.sheet').some((d) => d.open);
   $$('dialog.sheet').forEach((d) => {
+    d.addEventListener('close', () => reloadIfIdle());
     d.addEventListener('click', (e) => { if (e.target === d) closeSheet(d); });
     $$('[data-close]', d).forEach((b) => b.addEventListener('click', () => closeSheet(d)));
     d.addEventListener('close', poke);
@@ -1083,7 +1118,7 @@
   // ---------- events ----------
   $('#settingsBtn').addEventListener('click', () => openSheet(els.settingsSheet));
   $('#routinesBtn').addEventListener('click', openRoutineSheet);
-  els.picBtn.addEventListener('click', () => { buildPictureGrid(); openSheet(els.pictureSheet); });
+  els.picBtn.addEventListener('click', () => { buildTopicGrid(); openSheet(els.topicSheet); });
   const startFromSetup = () => startTimer({ duration: setup.duration, picture: setup.picture, label: setup.label });
   els.startBtn.addEventListener('click', startFromSetup);
   els.pauseBtn.addEventListener('click', togglePause);
@@ -1173,8 +1208,33 @@
   window.addEventListener('appinstalled', () => { els.installBtn.hidden = true; toast('Peekaboo is installed'); });
   if (isStandalone) $('#installNote').hidden = true;
 
+  // ---------- updates ----------
+  // A new version takes over in the background; the page reloads into it on the setup screen,
+  // never in the middle of a countdown or a celebration (then it waits for Done or Stop).
+  function reloadIfIdle() {
+    if (updateReady && view === 'setup' && !anySheetOpen()) location.reload();
+  }
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    const hadController = !!navigator.serviceWorker.controller; // not on the very first visit
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || updateReady) return;
+      updateReady = true;
+      reloadIfIdle();
+    });
     window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+    // An app on the home screen can stay open for days: look for a new version whenever it comes back.
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) return;
+      navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
+      reloadIfIdle();
+    });
+  }
+  // Settings → About shows the version, read from the offline cache name ("peekaboo-v10").
+  if (window.caches) {
+    caches.keys().then((keys) => {
+      const v = keys.filter((k) => /^peekaboo-v\d+$/.test(k)).map((k) => Number(k.slice(10))).sort((a, b) => b - a)[0];
+      if (v) $('#appVersion').textContent = `Version ${v}`;
+    }).catch(() => {});
   }
 
   // A library picture that cannot load (offline, never cached): show a drawn monster instead.
@@ -1223,6 +1283,11 @@
     settings.surprise = picked.length === ALL_GROUPS.length ? null : picked;
     saveSettings();
     store.set('deck', []);
+    if (topicOf(setup.picture) && !picked.includes(topicOf(setup.picture))) {
+      setup.picture = 'random';
+      saveSetup();
+      renderSetup();
+    }
   });
   $('#settingsBtn').addEventListener('click', buildSurpriseGroups);
 

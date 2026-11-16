@@ -1,6 +1,6 @@
 /* Peekaboo Timer — service worker. Network first for the app's own files (always fresh when
    online), cache fallback so it keeps working offline. Fonts are cached on first use. */
-const VERSION = 'peekaboo-v9';
+const VERSION = 'peekaboo-v10';
 const FONTS = 'peekaboo-fonts';
 const SHELL = [
   './',
@@ -43,8 +43,12 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   if (url.origin === self.location.origin) {
+    // App files ask the server every time (a cheap "not modified" when nothing changed), so a new
+    // version is never held back by the browser's own 10-minute HTTP cache. Pictures and sounds
+    // do not change, so they may come from that cache.
+    const fresh = !/\/(audio|library|icons)\//.test(url.pathname);
     event.respondWith(
-      fetch(req)
+      fetch(req, fresh ? { cache: 'no-cache' } : undefined)
         .then((res) => {
           if (res.ok) {
             const copy = res.clone();

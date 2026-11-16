@@ -115,8 +115,7 @@
       <div class="bump" id="bump" aria-hidden="true"></div>
 
       <div class="ctl-row" id="ctlRow">
-        <!-- Picture choice is hidden for now (every start is a surprise); remove coin-ghost to bring it back. -->
-        <button class="coin coin-pic coin-ghost slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Hidden picture" tabindex="-1"></button>
+        <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose a topic for the hidden picture" title="Topic"></button>
         <button class="coin coin-gold slot-l v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
           <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
         </button>
@@ -162,6 +161,20 @@
       <p class="hint">“Surprise me” shows a different picture every time the timer starts.</p>
       <div class="pic-sections" id="pictureGrid"></div>
       <input type="file" id="photoInput" accept="image/*" hidden>
+    </div>
+  </div>
+</dialog>
+
+<!-- ===== Topic sheet (the "?" coin) ===== -->
+<dialog class="sheet" id="topicSheet" aria-labelledby="topicSheetTitle">
+  <div class="sheet-inner">
+    <header class="sheet-head">
+      <h2 id="topicSheetTitle">What will hide?</h2>
+      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
+    </header>
+    <div class="sheet-body">
+      <p class="hint">Pick a topic. The picture stays a surprise until time is up.</p>
+      <div class="pic-grid topic-grid" id="topicGrid"></div>
     </div>
   </div>
 </dialog>
@@ -324,6 +337,7 @@
             <p>Peekaboo Timer has no ads, no accounts and no tracking. Your photos, routines and settings stay on this device.</p>
             <p>Pictures: Microsoft Fluent Emoji (MIT licence) and Google Noto Emoji (Apache 2.0 licence). Monsters, shapes and scenes are drawn by the app itself.</p>
             <p id="installNote">To use it like an app, add it to your home screen. On iPhone and iPad: tap Share, then <b>Add to Home Screen</b>.</p>
+            <p class="app-version" id="appVersion"></p>
           </div>
           <div class="set-row stack keys" id="keysHelp">
             <b>Keyboard</b>
