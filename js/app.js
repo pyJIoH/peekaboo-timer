@@ -6,13 +6,13 @@
 
   const SEC = 1000;
   const MIN = 60 * SEC;
-  const SETTINGS_VERSION = 2;
+  const SETTINGS_VERSION = 3;
 
   const DEFAULT_SETTINGS = {
     digits: true,
     reveal: 'gradual',
     color: 'traffic',
-    step: 10 * SEC,
+    step: 'auto', // gold coin step: 'auto' grows with the timer, or a fixed number of ms
     tick: 'clock',
     tickRate: 2,
     tickVolume: 0.85,
@@ -40,7 +40,8 @@
   // ---------- state ----------
   const storedSettings = store.get('settings', {}) || {};
   const settings = Object.assign({}, DEFAULT_SETTINGS, storedSettings);
-  if (storedSettings.v !== SETTINGS_VERSION) {
+  const settingsFrom = Number(storedSettings.v) || 0;
+  if (settingsFrom < 2) {
     // v2: louder tick-tock twice a second, and the fireworks ending, become the defaults.
     Object.assign(settings, {
       tick: storedSettings.tick === 'off' ? 'off' : (storedSettings.tick || 'clock'),
@@ -48,8 +49,12 @@
       tickVolume: Math.max(Number(storedSettings.tickVolume) || 0, DEFAULT_SETTINGS.tickVolume),
       endSound: 'fireworks',
       endVolume: Math.max(Number(storedSettings.endVolume) || 0, DEFAULT_SETTINGS.endVolume),
-      v: SETTINGS_VERSION,
     });
+  }
+  // v3: the gold coins follow the length of the timer instead of a fixed step.
+  if (settingsFrom < 3) settings.step = 'auto';
+  if (settingsFrom < SETTINGS_VERSION) {
+    settings.v = SETTINGS_VERSION;
     store.set('settings', settings);
   }
   const setup = Object.assign({ duration: 5 * MIN, picture: 'random', label: '' }, store.get('setup', {}));
@@ -620,11 +625,26 @@
     bump(`${delta > 0 ? '+' : '−'}${formatShort(Math.abs(delta))}`, fromEl || (delta > 0 ? els.plusCoin : els.minusCoin));
   }
 
+  // Auto step for the gold coins, by the length the timer was set to: a small nudge for a
+  // short timer, a bigger one for a long one (roughly a tenth to a thirtieth of the time).
+  const AUTO_STEPS = [
+    [1 * MIN, 5 * SEC],
+    [5 * MIN, 10 * SEC],
+    [10 * MIN, 30 * SEC],
+    [20 * MIN, 1 * MIN],
+    [Infinity, 2 * MIN],
+  ];
+  function coinStep() {
+    if (settings.step !== 'auto') return Number(settings.step) || 10 * SEC;
+    const d = timer.meta.duration || timer.total || setup.duration;
+    return AUTO_STEPS.find(([upTo]) => d <= upTo)[1];
+  }
+
   function stepLabel(ms) {
     return ms >= MIN ? `${ms / MIN}m` : String(ms / SEC);
   }
   function updateStepLabels() {
-    const s = settings.step;
+    const s = coinStep();
     $('#minusNum').textContent = `−${stepLabel(s)}`;
     $('#plusNum').textContent = `+${stepLabel(s)}`;
     els.minusCoin.setAttribute('aria-label', `${formatSpoken(s)} less`);
@@ -632,7 +652,7 @@
   }
 
   [els.minusCoin, els.plusCoin].forEach((btn) => {
-    holdRepeat(btn, () => adjust(btn.dataset.adjust === 'small' ? settings.step : -settings.step, btn));
+    holdRepeat(btn, () => adjust(btn.dataset.adjust === 'small' ? coinStep() : -coinStep(), btn));
   });
 
   function updateRunTools() {
@@ -1066,8 +1086,8 @@
       if (k === ' ' && !onControl) { e.preventDefault(); togglePause(); }
       else if (k === 'ArrowUp') { e.preventDefault(); adjust(MIN); }
       else if (k === 'ArrowDown') { e.preventDefault(); adjust(-MIN); }
-      else if (k === 'ArrowRight') { e.preventDefault(); adjust(settings.step); }
-      else if (k === 'ArrowLeft') { e.preventDefault(); adjust(-settings.step); }
+      else if (k === 'ArrowRight') { e.preventDefault(); adjust(coinStep()); }
+      else if (k === 'ArrowLeft') { e.preventDefault(); adjust(-coinStep()); }
       else if (k === 'd' || k === 'D') toggleDigits();
       else if (k === 'Escape') goSetup();
     } else if (view === 'done') {

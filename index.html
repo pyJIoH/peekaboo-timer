@@ -115,8 +115,8 @@
 
       <div class="ctl-row" id="ctlRow">
         <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Hidden picture"></button>
-        <button class="coin coin-gold slot-l v-run" id="minusCoin" type="button" data-adjust="-small" aria-label="10 seconds less">
-          <svg class="coin-arrow flip" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="minusNum">−10</span>
+        <button class="coin coin-gold slot-l v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
+          <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
         </button>
         <button class="coin coin-plain slot-l v-done" id="againBtn" type="button" aria-label="Again" title="Again"><svg class="ico"><use href="#i-again"/></svg></button>
 
@@ -130,8 +130,8 @@
         </div>
 
         <button class="coin coin-plain slot-r v-setup" id="routinesBtn" type="button" aria-label="Routines" title="Routines"><svg class="ico"><use href="#i-star"/></svg></button>
-        <button class="coin coin-gold slot-r v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
-          <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
+        <button class="coin coin-gold slot-r v-run" id="minusCoin" type="button" data-adjust="-small" aria-label="10 seconds less">
+          <svg class="coin-arrow flip" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="minusNum">−10</span>
         </button>
         <span class="coin coin-ghost slot-r v-done" aria-hidden="true"></span>
       </div>
@@ -226,8 +226,9 @@
             </div>
           </div>
           <div class="set-row stack">
-            <span class="set-text"><b>Gold coins add or take away</b></span>
+            <span class="set-text"><b>Gold coins add or take away</b><small>Auto grows with the timer: 5 s for 1 minute, 10 s up to 5 minutes, 30 s up to 10, 1 min up to 20, 2 min above</small></span>
             <div class="seg" role="radiogroup" aria-label="Gold coin step">
+              <label><input type="radio" name="step" id="stepAuto" value="auto" data-setting="step"><span>Auto</span></label>
               <label><input type="radio" name="step" id="step1" value="1000" data-setting="step" data-type="number"><span>1 s</span></label>
               <label><input type="radio" name="step" id="step5" value="5000" data-setting="step" data-type="number"><span>5 s</span></label>
               <label><input type="radio" name="step" id="step10" value="10000" data-setting="step" data-type="number"><span>10 s</span></label>
