@@ -560,7 +560,8 @@
       <path d="M${fx - 20} ${fy + 20}Q${fx} ${fy + 40} ${fx + 20} ${fy + 20}" fill="none" stroke="${dark}" stroke-width="6" stroke-linecap="round"/>`);
   }
 
-  // ---------- generated: numbers 0-100 ----------
+  // ---------- generated: numbers 0 to NUMBER_MAX ----------
+  const NUMBER_MAX = 25; // up to 100 can be drawn; kept small so numbers come up now and then
   // Each digit is a thick marker stroke in a 100 x 160 box, so it looks the same on every device
   // (an SVG picture cannot use the page's web fonts).
   const DIGITS = [
@@ -618,7 +619,7 @@
   BUILTINS.forEach((b) => add({ id: b.id, name: b.name, cat: b.cat, kind: 'scene', surprise: b.cat !== 'none' }));
   for (let n = 1; n <= MONSTER_COUNT; n++) add({ id: `m:${n}`, name: monsterName(n), cat: 'monsters', kind: 'monster', surprise: true });
   SHAPES.forEach((s, i) => add({ id: `s:${s[0]}`, name: s[1], cat: 'shapes', kind: 'shape', index: i, surprise: true }));
-  for (let n = 0; n <= 100; n++) add({ id: `num:${n}`, name: `Number ${n}`, cat: 'numbers', kind: 'number', surprise: true });
+  for (let n = 0; n <= NUMBER_MAX; n++) add({ id: `num:${n}`, name: `Number ${n}`, cat: 'numbers', kind: 'number', surprise: true });
   (PK.library || []).forEach(([src, file, name, cat]) => add({
     id: `${src}:${file}`, name, cat, kind: 'sticker', surprise: true,
     url: `library/${src === 'n' ? 'noto' : 'fluent'}/${file}.svg`,
@@ -635,6 +636,7 @@
 
   PK.pictures = {
     categories: CATEGORIES,
+    NUMBER_MAX,
     items: ITEMS,
     builtins: BUILTINS.map(({ id, name }) => ({ id, name })),
     get: (id) => BY_ID.get(id) || null,

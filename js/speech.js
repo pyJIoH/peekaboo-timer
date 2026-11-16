@@ -88,12 +88,13 @@
     octagon: "It's an octagon!", plus: "It's a plus!", 'half-circle': "It's a half circle!",
   };
 
-  // Numbers 0-100: "It's seven!", "It's twenty-one!", "It's one hundred!" (keys num-0 … num-100).
+  // Numbers 0 to NUMBER_MAX (see pictures.js): "It's seven!", "It's twenty-one!" (keys num-0, num-1 …).
+  const NUMBER_MAX = (PK.pictures && PK.pictures.NUMBER_MAX) || 25;
   const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
     'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
   const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
   const numberWords = (n) => (n === 100 ? 'one hundred' : n < 20 ? ONES[n] : TENS[Math.floor(n / 10)] + (n % 10 ? '-' + ONES[n % 10] : ''));
-  for (let n = 0; n <= 100; n++) SAY[`num-${n}`] = `It's ${numberWords(n)}!`;
+  for (let n = 0; n <= NUMBER_MAX; n++) SAY[`num-${n}`] = `It's ${numberWords(n)}!`;
 
   // Sound key → [seconds, ElevenLabs sound-effect prompt]. Kept short, clear and friendly.
   const C = ', close-up, clean, no music, no background noise';
@@ -373,7 +374,7 @@
     let m = /^m:(\d+)$/.exec(id);
     if (m) return { say: 'monster', fx: ROARS[Number(m[1]) % ROARS.length] };
     m = /^num:(\d+)$/.exec(id);
-    if (m) return { say: `num-${Number(m[1])}`, fx: null };
+    if (m) return Number(m[1]) <= NUMBER_MAX ? { say: `num-${Number(m[1])}`, fx: null } : null;
     m = /^[fn]:(.+)$/.exec(id);
     const key = m ? m[1] : id.startsWith('s:') ? id : '@' + id;
     const row = PICS[key];
