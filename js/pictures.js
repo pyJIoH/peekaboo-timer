@@ -338,16 +338,18 @@
     `<radialGradient id="p" cx="50%" cy="38%" r="72%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#eaeef9"/></radialGradient>`);
   }
 
+  // The drawn scenes belong to the topic of what they show (the kitty is with the animals).
+  // The plain clock face is only the setup screen's placeholder: no topic, never a surprise.
   const BUILTINS = [
-    { id: 'rocket', name: 'Space rocket', draw: rocket },
-    { id: 'ship', name: 'Pirate ship', draw: ship },
-    { id: 'cupcake', name: 'Cupcake', draw: cupcake },
-    { id: 'dino', name: 'Dinosaur', draw: dino },
-    { id: 'ocean', name: 'Under the sea', draw: ocean },
-    { id: 'rainbow', name: 'Rainbow', draw: rainbow },
-    { id: 'kitty', name: 'Kitty', draw: kitty },
-    { id: 'train', name: 'Steam train', draw: train },
-    { id: 'plain', name: 'Plain clock face', draw: plain },
+    { id: 'rocket', name: 'Space rocket', draw: rocket, cat: 'vehicles' },
+    { id: 'ship', name: 'Pirate ship', draw: ship, cat: 'vehicles' },
+    { id: 'cupcake', name: 'Cupcake', draw: cupcake, cat: 'food' },
+    { id: 'dino', name: 'Dinosaur', draw: dino, cat: 'animals' },
+    { id: 'ocean', name: 'Under the sea', draw: ocean, cat: 'animals' },
+    { id: 'rainbow', name: 'Rainbow', draw: rainbow, cat: 'nature' },
+    { id: 'kitty', name: 'Kitty', draw: kitty, cat: 'animals' },
+    { id: 'train', name: 'Steam train', draw: train, cat: 'vehicles' },
+    { id: 'plain', name: 'Plain clock face', draw: plain, cat: 'none' },
   ];
 
   // ---------- generated: friendly monsters ----------
@@ -560,7 +562,6 @@
 
   // ---------- one catalog for everything ----------
   const CATEGORIES = [
-    { id: 'scenes', name: 'Picture scenes' },
     { id: 'animals', name: 'Animals' },
     { id: 'monsters', name: 'Monsters and magic' },
     { id: 'shapes', name: 'Shapes' },
@@ -573,7 +574,7 @@
   const ITEMS = [];
   const BY_ID = new Map();
   const add = (item) => { ITEMS.push(item); BY_ID.set(item.id, item); };
-  BUILTINS.forEach((b) => add({ id: b.id, name: b.name, cat: 'scenes', kind: 'scene', surprise: b.id !== 'plain' }));
+  BUILTINS.forEach((b) => add({ id: b.id, name: b.name, cat: b.cat, kind: 'scene', surprise: b.cat !== 'none' }));
   for (let n = 1; n <= MONSTER_COUNT; n++) add({ id: `m:${n}`, name: monsterName(n), cat: 'monsters', kind: 'monster', surprise: true });
   SHAPES.forEach((s, i) => add({ id: `s:${s[0]}`, name: s[1], cat: 'shapes', kind: 'shape', index: i, surprise: true }));
   (PK.library || []).forEach(([src, file, name, cat]) => add({

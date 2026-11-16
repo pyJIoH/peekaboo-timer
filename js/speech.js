@@ -67,7 +67,7 @@
     planet: "It's a planet!", star: "It's a star!", 'shooting-star': "It's a shooting star!", 'milky-way': "It's the Milky Way!",
     cloud: "It's a cloud!", rain: "It's rain!", storm: "It's a storm!", snow: "It's snow!",
     rainbow: "It's a rainbow!", umbrella: "It's an umbrella!", snowflake: "It's a snowflake!", snowman: "It's a snowman!",
-    comet: "It's a comet!", wave: "It's a wave!", ocean: "It's the ocean!",
+    comet: "It's a comet!", wave: "It's a wave!",
     // toys and fun
     smiley: "It's a smiley face!", cowboy: "It's a cowboy!", party: "It's a party!", heart: "It's a heart!",
     house: "It's a house!", castle: "It's a castle!", fountain: "It's a fountain!", night: "It's night time!",
@@ -344,9 +344,9 @@
     's:circle': 'circle', 's:square': 'square', 's:triangle': 'triangle', 's:star': 'star', 's:heart': 'heart',
     's:rectangle': 'rectangle', 's:oval': 'oval', 's:diamond': 'diamond', 's:pentagon': 'pentagon', 's:hexagon': 'hexagon',
     's:octagon': 'octagon', 's:crescent': 'moon', 's:cloud': 'cloud', 's:plus': 'plus', 's:half': 'half-circle', 's:flower': 'flower',
-    // picture scenes
+    // drawn scenes
     '@rocket': 'rocket launch', '@ship': 'pirate-ship waves', '@cupcake': 'cupcake munch', '@dino': 'dinosaur dino',
-    '@ocean': 'ocean bubbles', '@rainbow': 'rainbow twinkle', '@kitty': 'cat meow', '@train': 'train choo', '@plain': 'clock ticktock',
+    '@ocean': 'fish bubbles', '@rainbow': 'rainbow twinkle', '@kitty': 'cat meow', '@train': 'train choo', '@plain': 'clock ticktock',
   };
 
   const ROARS = ['roar1', 'roar2', 'roar3'];
@@ -356,7 +356,7 @@
   const TOPICS = {
     random: 'Surprise me!', animals: 'Animals!', monsters: 'Monsters and magic!', shapes: 'Shapes!',
     food: 'Food and sweets!', vehicles: 'Things that go!', nature: 'Nature and sky!', fun: 'Toys and fun!',
-    scenes: 'Picture scenes!', photos: 'Your photos!',
+    photos: 'Your photos!',
   };
   const topicUrl = (id) => (TOPICS[id] ? `audio/say/topic-${id}.mp3` : null);
 

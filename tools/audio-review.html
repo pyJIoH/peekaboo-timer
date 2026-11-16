@@ -44,7 +44,7 @@
     if (!groups.has(k)) groups.set(k, { say: e.say, fx: e.fx, cat: item.cat, items: [] });
     groups.get(k).items.push(item);
   }
-  const names = Object.fromEntries(pictures.categories.map((c) => [c.id, c.name]));
+  const names = Object.assign({ none: 'Setup screen (not a surprise)' }, Object.fromEntries(pictures.categories.map((c) => [c.id, c.name])));
   const audio = new Audio();
   let queue = [];
   let current = null;

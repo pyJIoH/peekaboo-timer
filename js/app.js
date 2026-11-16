@@ -77,8 +77,13 @@
     // v3: the picture button is hidden, so a picture chosen before could never be changed back.
     setup.picture = 'random';
   }
-  if (setupFrom < 3) {
-    setup.v = 3;
+  // v4: the "Picture scenes" topic is gone (its pictures moved to the topics of what they show).
+  if (setupFrom < 4) {
+    if (setup.picture === 'random:scenes') setup.picture = 'random';
+    routines.forEach((r) => { if (r.picture === 'random:scenes') r.picture = 'random'; });
+    store.set('presets', routines);
+    store.remove('deck:scenes');
+    setup.v = 4;
     store.set('setup', setup);
   }
   const timer = PK.Timer.restore(store.get('timer', null));
@@ -111,9 +116,9 @@
   // Topics: "random:animals" is a surprise from one group only; plain "random" uses every group.
   const topicOf = (id) => (typeof id === 'string' && id.startsWith('random:') ? id.slice(7) : null);
   const isRandom = (id) => id === 'random' || !!topicOf(id);
-  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'food', 'vehicles', 'nature', 'fun', 'scenes', 'photos'];
+  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'food', 'vehicles', 'nature', 'fun', 'photos'];
   const TOPIC_ICON = { animals: 'f:cat-face', monsters: 'm:3', shapes: 's:star', food: 'f:cupcake', vehicles: 'f:rocket',
-    nature: 'f:sunflower', fun: 'f:balloon', scenes: 'ocean' };
+    nature: 'f:sunflower', fun: 'f:balloon' };
   const topicName = (t) => (t === 'photos' ? 'Your photos' : (PK.pictures.categories.find((c) => c.id === t) || {}).name || 'Surprise me');
   const topicIcon = (t) => (t === 'photos' ? (photos[0] && photos[0].id) || 'random' : TOPIC_ICON[t] || 'random');
   const pictureExists = (id) => id === 'random' || TOPIC_ORDER.includes(topicOf(id)) || PK.pictures.has(id) || !!photoUrl(id) || (isPhoto(id) && !photosLoaded);
@@ -158,6 +163,14 @@
 
   // "Surprise me": a shuffled deck, so every picture shows once before any repeats.
   const ALL_GROUPS = PK.pictures.categories.map((c) => c.id).concat('photos');
+  if (Array.isArray(settings.surprise)) {
+    // Groups that no longer exist ("scenes") drop out; nothing left means every group.
+    const known = settings.surprise.filter((g) => ALL_GROUPS.includes(g));
+    if (known.length !== settings.surprise.length) {
+      settings.surprise = known.length ? known : null;
+      store.set('settings', settings);
+    }
+  }
   function surprisePool(topic) {
     const groups = new Set(topic ? [topic] : Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
     let pool = PK.pictures.items.filter((i) => i.surprise && groups.has(i.cat)).map((i) => i.id);
