@@ -190,7 +190,22 @@
     const pool = surprisePool(topic);
     const inPool = new Set(pool);
     const deckKey = topic ? `deck:${topic}` : 'deck'; // each topic deals from its own deck
+    const poolKey = `${deckKey}:pool`; // the pictures that deck was made from
+    const known = store.get(poolKey, null);
     let deck = (store.get(deckKey, []) || []).filter((id) => inPool.has(id));
+    if (!Array.isArray(known)) {
+      deck = []; // a deck from before this was recorded may be missing new pictures: shuffle a fresh one
+    } else if (deck.length) {
+      // Pictures added since the deck was shuffled (a new topic, more pictures) join it at random
+      // places, instead of waiting until the whole old deck has been dealt. If they would crowd a
+      // nearly finished deck, shuffle everything afresh instead.
+      const had = new Set(known);
+      const inDeck = new Set(deck);
+      const fresh = pool.filter((id) => !had.has(id) && !inDeck.has(id));
+      if (fresh.length > deck.length / 2) deck = [];
+      else fresh.forEach((id) => deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, id));
+    }
+    store.set(poolKey, pool);
     if (!deck.length) {
       deck = shuffle(pool.slice());
       if (deck.length > 1 && deck[0] === store.get('lastRandom', null)) deck.push(deck.shift());
@@ -1304,6 +1319,7 @@
     settings.surprise = picked.length === ALL_GROUPS.length ? null : picked;
     saveSettings();
     store.set('deck', []);
+    store.remove('deck:pool'); // a different set of groups: shuffle a fresh deck from all of it
     if (topicOf(setup.picture) && !picked.includes(topicOf(setup.picture))) {
       setup.picture = 'random';
       saveSetup();
