@@ -561,7 +561,7 @@
   }
 
   // ---------- generated: numbers 0 to NUMBER_MAX ----------
-  const NUMBER_MAX = 25; // up to 100 can be drawn; kept small so numbers come up now and then
+  const NUMBER_MAX = 50; // up to 100 can be drawn; kept small so numbers come up now and then
   // Each digit is a thick marker stroke in a 100 x 160 box, so it looks the same on every device
   // (an SVG picture cannot use the page's web fonts).
   const DIGITS = [

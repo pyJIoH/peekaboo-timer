@@ -89,7 +89,7 @@
   };
 
   // Numbers 0 to NUMBER_MAX (see pictures.js): "It's seven!", "It's twenty-one!" (keys num-0, num-1 …).
-  const NUMBER_MAX = (PK.pictures && PK.pictures.NUMBER_MAX) || 25;
+  const NUMBER_MAX = (PK.pictures && PK.pictures.NUMBER_MAX) || 50;
   const ONES = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve',
     'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'];
   const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
