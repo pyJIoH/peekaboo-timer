@@ -186,10 +186,12 @@
     }
     return arr;
   }
-  function pickRandom(topic) {
+  const deckKeyFor = (topic) => (topic ? `deck:${topic}` : 'deck'); // each topic deals from its own deck
+  /** The deck for "Surprise me" or a topic, brought up to date (new pictures mixed in, reshuffled when empty). */
+  function deckFor(topic) {
     const pool = surprisePool(topic);
     const inPool = new Set(pool);
-    const deckKey = topic ? `deck:${topic}` : 'deck'; // each topic deals from its own deck
+    const deckKey = deckKeyFor(topic);
     const poolKey = `${deckKey}:pool`; // the pictures that deck was made from
     const known = store.get(poolKey, null);
     let deck = (store.get(deckKey, []) || []).filter((id) => inPool.has(id));
@@ -210,8 +212,13 @@
       deck = shuffle(pool.slice());
       if (deck.length > 1 && deck[0] === store.get('lastRandom', null)) deck.push(deck.shift());
     }
-    const pick = deck.shift();
     store.set(deckKey, deck);
+    return deck;
+  }
+  function pickRandom(topic) {
+    const deck = deckFor(topic);
+    const pick = deck.shift();
+    store.set(deckKeyFor(topic), deck);
     store.set('lastRandom', pick);
     prefetch(deck[0]);
     return pick;
@@ -328,8 +335,10 @@
     dial.setFraction(1);
     dial.setColor(coverColor(1));
     dial.setCount(null);
-    if (isRandom(setup.picture)) dial.setPicture(PK.pictures.src('plain'), '');
-    else showPicture(setup.picture);
+    if (isRandom(setup.picture)) {
+      dial.setPicture(PK.pictures.mystery(), ''); // a big "?" under the cover: the picture is a surprise
+      prefetch(deckFor(topicOf(setup.picture))[0]); // the picture the next Start will reveal
+    } else showPicture(setup.picture);
     syncWheels();
     updateSetupMeta();
     updatePicCoin();

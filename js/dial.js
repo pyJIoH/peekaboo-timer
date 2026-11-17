@@ -43,6 +43,7 @@
       this.color = '';
       this.count = null;
       this.key = '';
+      this.loading = 0;
       this.onError = null;
       this.pic.addEventListener('error', () => { if (this.onError) this.onError(); });
     }
@@ -52,9 +53,17 @@
       const key = `${src}|${backdrop || ''}`;
       if (key === this.key) return;
       this.key = key;
-      this.pic.classList.toggle('sticker', !!backdrop);
+      // While the new picture loads, the old one must not show through the uncovered part of the
+      // dial (it used to: the setup screen's placeholder, then the real picture popping in).
+      const pic = this.pic;
+      const token = ++this.loading;
+      pic.classList.add('loading');
+      pic.classList.toggle('sticker', !!backdrop);
       this.face.style.backgroundImage = backdrop || '';
-      this.pic.src = src;
+      pic.src = src;
+      const shown = () => { if (token === this.loading) pic.classList.remove('loading'); };
+      if (pic.complete && pic.naturalWidth) shown();
+      else pic.addEventListener('load', shown, { once: true });
     }
 
     setSecret(on) {

@@ -601,6 +601,27 @@
       ${g(fill, 26)}`);
   }
 
+  // ---------- the setup screen's placeholder: a rainbow "?" (the real picture is a surprise) ----------
+  function mysteryPicture() {
+    let slices = '';
+    for (let i = 0; i < 12; i++) {
+      const a0 = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      const a1 = ((i + 1) / 12) * Math.PI * 2 - Math.PI / 2;
+      const p = (a) => `${(200 + 300 * Math.cos(a)).toFixed(1)} ${(200 + 300 * Math.sin(a)).toFixed(1)}`;
+      slices += `<path d="M200 200L${p(a0)}L${p(a1)}Z" fill="${hsl(i * 30 + 5, 88, 64)}"/>`;
+    }
+    const k = 1.45;
+    const t = `translate(${(200 - 50 * k).toFixed(1)} ${(200 - 80 * k).toFixed(1)}) scale(${k})`;
+    const q = 'M22 46C22 26 36 14 52 14C70 14 84 26 84 44C84 60 74 68 62 76C54 81 50 88 50 100V104M50 140V141';
+    const stroke = (color, width) => `<path d="${q}" transform="${t}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    return svg(`
+      ${slices}
+      <circle cx="200" cy="200" r="150" fill="#fff" opacity=".18"/>
+      <g transform="translate(0 6)" opacity=".2">${stroke('#000', 40)}</g>
+      ${stroke('#4a2f86', 40)}
+      ${stroke('#fff', 26)}`);
+  }
+
   // ---------- one catalog for everything ----------
   const CATEGORIES = [
     { id: 'animals', name: 'Animals' },
@@ -637,6 +658,11 @@
   PK.pictures = {
     categories: CATEGORIES,
     NUMBER_MAX,
+    /** The "?" shown under the cover on the setup screen. */
+    mystery() {
+      if (!cache.has('mystery')) cache.set('mystery', toData(mysteryPicture()));
+      return cache.get('mystery');
+    },
     items: ITEMS,
     builtins: BUILTINS.map(({ id, name }) => ({ id, name })),
     get: (id) => BY_ID.get(id) || null,

@@ -44,7 +44,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 - **Routines** (presets) such as *Brush teeth 2:00*: tap one to start it. Save, update, delete, restore the examples.
 - Phone first: the whole timer always fits the screen with no scrolling, in portrait and landscape (checked from 320 px phones to tablets). Every button is at least 44 × 44 px; the ■ button stops at once, without a question. Controls fade while the timer runs.
 - The sky follows the real clock: sunrise, daytime with the sun moving across, sunset, and night with moon and stars. It can also be fixed.
-- Updates itself: app files are always checked with the server, and a new version loads on its own on the setup screen (never during a countdown or the celebration). Settings → About shows the version number.
+- Updates itself: app files are always checked with the server, and a new version loads on its own on the setup screen (never during a countdown or the celebration). Settings → About shows the version number. Pictures and sounds come from the offline cache after their first load, and the next surprise loads while the setup screen is open, so the picture is there the moment the timer starts.
 - Keeps the screen awake while running, optional notification when time is up in the background, remaining time and a progress pie in the browser tab, survives reloads and works across tabs.
 - Light and dark menus, keyboard shortcuts, screen-reader labels, reduced-motion support.
 
