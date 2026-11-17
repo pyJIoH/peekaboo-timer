@@ -845,27 +845,6 @@ kbd { display: inline-block; min-width: 1.6em; margin-right: 4px; padding: 3px 7
 .pic-tile:active .pic-img { transform: scale(0.94); }
 .pic-tile[aria-pressed="true"] .pic-img { box-shadow: 0 0 0 3px var(--cell), 0 0 0 7px var(--gold), 0 4px 12px -4px rgba(0, 0, 0, 0.4); }
 .pic-random .pic-img { background: conic-gradient(from 20deg, #ff5a5f, #ffb020, #ffd23f, #2fc46a, #3ab0ff, #8e6cff, #ff5a5f); color: #fff; font: 800 2.4rem/1 var(--font-display); text-shadow: 0 2px 0 rgba(0, 0, 0, 0.25); }
-.pic-add .pic-img { background: transparent; box-shadow: inset 0 0 0 2.5px var(--ink-soft); color: var(--ink-soft); }
-.pic-add .pic-img .ico { width: 30px; height: 30px; }
-.pic-del {
-  position: absolute;
-  top: -4px;
-  left: calc(50% + 22px);
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: var(--cell);
-  color: var(--ink);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  cursor: pointer;
-}
-.pic-del .ico { width: 14px; height: 14px; stroke-width: 3; }
-.pic-del::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; } /* 44 px finger area around the small badge */
-.pic-del.confirm { background: var(--danger); color: #fff; }
 
 /* routines */
 .hint { margin: 0 4px; color: var(--ink-soft); font-size: 0.88rem; line-height: 1.4; }

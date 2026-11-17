@@ -30,21 +30,21 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 - **596 hidden pictures, a new surprise every start.** "Surprise me" is the default: each start deals the next card from a shuffled deck, so every picture appears once before any repeat.
   - 472 emoji-style pictures in two art styles (Microsoft Fluent Emoji, Google Noto Emoji): animals, fairies, superheroes, robots, aliens, food and sweets, vehicles, nature and weather, toys, sports, music, party things.
   - 48 friendly monsters, 16 shape friends (circle, star, heart, triangle...) and the numbers 0 to 50, drawn by the app's own code, so they work offline.
-  - 8 illustrated scenes (rocket, pirate ship, train, cupcake, kitty, dinosaur, clownfish, rainbow), each in the topic of what it shows, a plain clock face, and **your own photos** (unlimited, stored only on the device).
-  - The **?** coin opens topics, not single pictures: *Surprise me*, Animals, Monsters and magic, Shapes, Numbers, Food and sweets, Things that go, Nature and sky, Toys and fun (and Your photos when there are some). Topics go by what a picture shows, so every cat, the drawn kitty too, is in Animals. The child picks a topic (the voice says its name: "ANIMALS!"); the picture inside it stays a surprise, and each topic deals its own deck without repeats. The coin shows the topic's picture, and routines remember a topic.
+  - 8 illustrated scenes (rocket, pirate ship, train, cupcake, kitty, dinosaur, clownfish, rainbow), each in the topic of what it shows.
+  - The **?** coin opens topics, not single pictures: *Surprise me*, Animals, Monsters and magic, Shapes, Numbers, Food and sweets, Things that go, Nature and sky, Toys and fun. Topics go by what a picture shows, so every cat, the drawn kitty too, is in Animals. The child picks a topic (the voice says its name: "ANIMALS!"); the picture inside it stays a surprise, and each topic deals its own deck without repeats. The coin shows the topic's picture, and routines remember a topic.
   - Settings → *Surprise pictures come from* picks which groups *Surprise me* uses, and only those groups are offered as topics.
   - When time is up the picture spins and its name appears ("Jellyfish!").
 - Green → amber → red cover, or a fixed colour. Optional **blurry until the end** mode.
 - **Tick-tock twice a second** (clock, wood block, bubble or off; once a second if you prefer) with its own volume, plus countdown beeps for the last 5 seconds.
 - **Fireworks finale**: the sky dims, rockets whistle up and burst into glowing sparks with booms and crackle. The revealed picture spins and stays clear of the sparks.
-  Little copies of the revealed picture burst out of the circle and tumble down with the sparks; tap the picture afterwards for another burst.
-  Other endings: fanfare, chimes, magic, cuckoo, beeps. By default the whole celebration (fireworks, flying pictures, spinning picture) goes on and keeps the screen on until someone taps *Done*; it can be set to play once.
-- **The picture says what it is**: when time is up a friendly voice says "It's a cat!" and then the cat meows; a train whistles, a monster roars, a plane flies by. Every cat is "a cat" and every monster "a monster", so the words stay simple; numbers are read out ("It's TWENTY-ONE!"). Tap the picture to hear it again. Can be turned off in Settings. Your own photos stay quiet.
-- The picture stays on screen until someone taps *Done*; tap it to spin it again. *Again* restarts the same timer.
+  Little copies of the revealed picture burst out of the circle and tumble down with the sparks.
+  Other endings: fanfare, chimes, magic, cuckoo, beeps. The celebration plays once; **tap the picture and it all plays again**: fireworks, flying pictures, the spin and the voice. It can also be set to go on (and keep the screen on) until someone taps *Done*.
+- **The picture says what it is**: when time is up a friendly voice says "It's a cat!" and then the cat meows; a train whistles, a monster roars, a plane flies by. Every cat is "a cat" and every monster "a monster", so the words stay simple; numbers are read out ("It's TWENTY-ONE!"). Tap the picture to hear it again, with the fireworks. Can be turned off in Settings.
+- The picture stays on screen until someone taps *Done*. *Again* restarts the same timer.
 - **Routines** (presets) such as *Brush teeth 2:00*: tap one to start it. Save, update, delete, restore the examples.
 - Phone first: the whole timer always fits the screen with no scrolling, in portrait and landscape (checked from 320 px phones to tablets). Every button is at least 44 × 44 px; the ■ button stops at once, without a question. Controls fade while the timer runs.
 - The sky follows the real clock: sunrise, daytime with the sun moving across, sunset, and night with moon and stars. It can also be fixed.
-- Updates itself: app files are always checked with the server, and a new version loads on its own on the setup screen (never during a countdown or the celebration). Settings → About shows the version number. Pictures and sounds come from the offline cache after their first load, and the next surprise loads while the setup screen is open, so the picture is there the moment the timer starts.
+- Updates itself: app files are always checked with the server, and a new version loads on its own on the setup screen (never during a countdown or the celebration). Settings → About shows the version number. Pictures and sounds come from their own offline cache after their first load (kept across updates), and the next surprise loads while the setup screen is open, so the picture is there the moment the timer starts.
 - Keeps the screen awake while running, optional notification when time is up in the background, remaining time and a progress pie in the browser tab, survives reloads and works across tabs.
 - Light and dark menus, keyboard shortcuts, screen-reader labels, reduced-motion support.
 
@@ -58,7 +58,7 @@ GitHub Pages, Netlify, Cloudflare Pages, Vercel or your own server. Once it is s
 | Sound | Web Audio API synthesis, ticks scheduled on the audio clock | Steady ticks even when the page is busy; separate tick/end volumes |
 | Picture voices | Recorded MP3 clips made once with ElevenLabs (`tools/make-audio.mjs`) | Same voice every time, no network calls from the app; a picture's clips load when the timer starts and are cached for offline |
 | Graphics | SVG dial and SVG illustrations | Sharp at any size, from a phone to a classroom projector |
-| Storage | `localStorage` for settings/routines, IndexedDB for photos | Private, on-device, no server |
+| Storage | `localStorage` for settings and routines | Private, on-device, no server |
 
 ## Files
 
@@ -76,7 +76,6 @@ tools/make-audio.mjs  makes missing clips with ElevenLabs; key in elevenlabs.txt
 library/              downloaded pictures + LICENSES.md (sources and licence texts)
 js/sounds.js          sound engine
 js/sky.js             time-of-day sky
-js/photos.js          your photos (IndexedDB)
 js/wheel.js           iPhone-style wheel picker
 js/fireworks.js       end-of-timer fireworks
 js/app.js             app wiring

@@ -60,7 +60,7 @@ for (const item of pictures.items) {
   if (e.fx) usedFx.add(e.fx);
 }
 for (const k of Object.keys(speech.SAY)) if (!usedSay.has(k)) problems.push(`phrase "${k}" is not used by any picture`);
-for (const t of ['random', 'photos', ...pictures.categories.map((c) => c.id)]) if (!speech.TOPICS[t]) problems.push(`no name for topic "${t}"`);
+for (const t of ['random', ...pictures.categories.map((c) => c.id)]) if (!speech.TOPICS[t]) problems.push(`no name for topic "${t}"`);
 for (const k of Object.keys(speech.FX)) if (!usedFx.has(k)) problems.push(`sound "${k}" is not used by any picture`);
 for (const k of only) {
   const [kind, name] = k.includes(':') ? k.split(':') : ['', k];

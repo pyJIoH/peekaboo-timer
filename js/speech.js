@@ -364,11 +364,10 @@
   const TOPICS = {
     random: 'Surprise me!', animals: 'Animals!', monsters: 'Monsters and magic!', shapes: 'Shapes!', numbers: 'Numbers!',
     food: 'Food and sweets!', vehicles: 'Things that go!', nature: 'Nature and sky!', fun: 'Toys and fun!',
-    photos: 'Your photos!',
   };
   const topicUrl = (id) => (TOPICS[id] ? `audio/say/topic-${id}.mp3` : null);
 
-  /** { say, fx } audio keys for a picture id, or null (your own photos say nothing). */
+  /** { say, fx } audio keys for a picture id, or null if it has none. */
   function lookup(id) {
     if (!id) return null;
     let m = /^m:(\d+)$/.exec(id);

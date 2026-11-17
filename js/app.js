@@ -6,7 +6,7 @@
 
   const SEC = 1000;
   const MIN = 60 * SEC;
-  const SETTINGS_VERSION = 5;
+  const SETTINGS_VERSION = 6;
 
   const DEFAULT_SETTINGS = {
     digits: true,
@@ -19,7 +19,7 @@
     pips: true,
     endSound: 'fireworks',
     endVolume: 0.9,
-    repeatEnd: true, // fireworks, spinning and flying pictures go on until Done
+    repeatEnd: false, // on: fireworks, spinning and flying pictures go on until Done
     speak: true, // the picture says what it is ("It's a cat!") and makes its sound
     sky: 'auto',
     theme: 'system',
@@ -58,6 +58,8 @@
   if (settingsFrom < 4) settings.repeatEnd = true;
   // v5: the new Numbers topic starts switched on, also for a parent who picked groups by hand.
   if (settingsFrom < 5 && Array.isArray(settings.surprise) && !settings.surprise.includes('numbers')) settings.surprise.push('numbers');
+  // v6: the celebration plays once again; tapping the picture plays it all once more.
+  if (settingsFrom < 6) settings.repeatEnd = false;
   if (settingsFrom < SETTINGS_VERSION) {
     settings.v = SETTINGS_VERSION;
     store.set('settings', settings);
@@ -88,9 +90,20 @@
     setup.v = 4;
     store.set('setup', setup);
   }
+  // v5: "your own photos" is gone. Anything that pointed at a photo is a surprise again, and the
+  // photos this app had stored on the device are deleted with it.
+  if (setupFrom < 5) {
+    const wasPhoto = (p) => p === 'random:photos' || (typeof p === 'string' && p.startsWith('photo-'));
+    if (wasPhoto(setup.picture)) setup.picture = 'random';
+    routines.forEach((r) => { if (wasPhoto(r.picture)) r.picture = 'random'; });
+    store.set('presets', routines);
+    store.remove('deck:photos');
+    store.remove('deck:photos:pool');
+    try { indexedDB.deleteDatabase('peekaboo'); } catch (e) { /* no IndexedDB here */ }
+    setup.v = 5;
+    store.set('setup', setup);
+  }
   const timer = PK.Timer.restore(store.get('timer', null));
-  let photos = []; // { id, url }
-  let photosLoaded = false;
   let view = 'setup';
   let updateReady = false; // a new version is waiting for the setup screen (see "updates")
 
@@ -108,35 +121,31 @@
     ctlRow: $('#ctlRow'), picBtn: $('#picBtn'), startBtn: $('#startBtn'),
     pauseBtn: $('#pauseBtn'), stopBtn: $('#stopBtn'), minusCoin: $('#minusCoin'), plusCoin: $('#plusCoin'),
     muteBtn: $('#muteBtn'), digitsBtn: $('#digitsBtn'), fullBtn: $('#fullBtn'), installBtn: $('#installBtn'),
-    soundHint: $('#soundHint'), toast: $('#toast'), picker: $('#picker'), photoInput: $('#photoInput'),
+    soundHint: $('#soundHint'), toast: $('#toast'), picker: $('#picker'),
     pictureSheet: $('#pictureSheet'), topicSheet: $('#topicSheet'), routineSheet: $('#routineSheet'), settingsSheet: $('#settingsSheet'),
   };
 
   // ---------- pictures ----------
-  const photoUrl = (id) => { const p = photos.find((x) => x.id === id); return p ? p.url : null; };
-  const isPhoto = (id) => typeof id === 'string' && id.startsWith('photo-');
   // Topics: "random:animals" is a surprise from one group only; plain "random" uses every group.
   const topicOf = (id) => (typeof id === 'string' && id.startsWith('random:') ? id.slice(7) : null);
   const isRandom = (id) => id === 'random' || !!topicOf(id);
-  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'numbers', 'food', 'vehicles', 'nature', 'fun', 'photos'];
+  const TOPIC_ORDER = ['animals', 'monsters', 'shapes', 'numbers', 'food', 'vehicles', 'nature', 'fun'];
   const TOPIC_ICON = { animals: 'f:cat-face', monsters: 'm:3', shapes: 's:star', numbers: 'num:12', food: 'f:cupcake', vehicles: 'f:rocket',
     nature: 'f:sunflower', fun: 'f:balloon' };
-  const topicName = (t) => (t === 'photos' ? 'Your photos' : (PK.pictures.categories.find((c) => c.id === t) || {}).name || 'Surprise me');
-  const topicIcon = (t) => (t === 'photos' ? (photos[0] && photos[0].id) || 'random' : TOPIC_ICON[t] || 'random');
-  const pictureExists = (id) => id === 'random' || TOPIC_ORDER.includes(topicOf(id)) || PK.pictures.has(id) || !!photoUrl(id) || (isPhoto(id) && !photosLoaded);
-  const pictureSrc = (id) => photoUrl(id) || PK.pictures.src(PK.pictures.has(id) ? id : 'rocket');
-  const backdropFor = (id) => (isPhoto(id) ? '' : PK.pictures.backdrop(id));
+  const topicName = (t) => (PK.pictures.categories.find((c) => c.id === t) || {}).name || 'Surprise me';
+  const topicIcon = (t) => TOPIC_ICON[t] || 'random';
+  const pictureExists = (id) => id === 'random' || TOPIC_ORDER.includes(topicOf(id)) || PK.pictures.has(id);
+  const pictureSrc = (id) => PK.pictures.src(PK.pictures.has(id) ? id : 'rocket');
+  const backdropFor = (id) => PK.pictures.backdrop(id);
   const showPicture = (id) => dial.setPicture(pictureSrc(id), backdropFor(id));
   function pictureLabel(id) {
     if (id === 'random') return 'Surprise me';
     if (topicOf(id)) return topicName(topicOf(id));
-    if (isPhoto(id)) return 'Your photo';
     return PK.pictures.name(id) || 'Picture';
   }
   function picturePhrase(id) {
     if (id === 'random') return 'a surprise picture';
     if (topicOf(id)) return `a surprise from ${topicName(topicOf(id)).toLowerCase()}`;
-    if (isPhoto(id)) return 'your photo';
     return `the ${(PK.pictures.name(id) || 'picture').toLowerCase()} picture`;
   }
 
@@ -164,9 +173,9 @@
   }
 
   // "Surprise me": a shuffled deck, so every picture shows once before any repeats.
-  const ALL_GROUPS = PK.pictures.categories.map((c) => c.id).concat('photos');
+  const ALL_GROUPS = PK.pictures.categories.map((c) => c.id);
   if (Array.isArray(settings.surprise)) {
-    // Groups that no longer exist ("scenes") drop out; nothing left means every group.
+    // Groups that no longer exist ("scenes", "photos") drop out; nothing left means every group.
     const known = settings.surprise.filter((g) => ALL_GROUPS.includes(g));
     if (known.length !== settings.surprise.length) {
       settings.surprise = known.length ? known : null;
@@ -175,8 +184,7 @@
   }
   function surprisePool(topic) {
     const groups = new Set(topic ? [topic] : Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
-    let pool = PK.pictures.items.filter((i) => i.surprise && groups.has(i.cat)).map((i) => i.id);
-    if (groups.has('photos')) pool = pool.concat(photos.map((p) => p.id));
+    const pool = PK.pictures.items.filter((i) => i.surprise && groups.has(i.cat)).map((i) => i.id);
     return pool.length ? pool : PK.pictures.items.filter((i) => i.surprise).map((i) => i.id);
   }
   function shuffle(arr) {
@@ -194,7 +202,9 @@
     const deckKey = deckKeyFor(topic);
     const poolKey = `${deckKey}:pool`; // the pictures that deck was made from
     const known = store.get(poolKey, null);
-    let deck = (store.get(deckKey, []) || []).filter((id) => inPool.has(id));
+    const stored = store.get(deckKey, []) || [];
+    let deck = stored.filter((id) => inPool.has(id));
+    let changed = deck.length !== stored.length;
     if (!Array.isArray(known)) {
       deck = []; // a deck from before this was recorded may be missing new pictures: shuffle a fresh one
     } else if (deck.length) {
@@ -206,13 +216,16 @@
       const fresh = pool.filter((id) => !had.has(id) && !inDeck.has(id));
       if (fresh.length > deck.length / 2) deck = [];
       else fresh.forEach((id) => deck.splice(Math.floor(Math.random() * (deck.length + 1)), 0, id));
+      if (fresh.length) changed = true;
     }
-    store.set(poolKey, pool);
+    if (!Array.isArray(known) || known.length !== pool.length || known.some((id, i) => id !== pool[i])) store.set(poolKey, pool);
     if (!deck.length) {
       deck = shuffle(pool.slice());
       if (deck.length > 1 && deck[0] === store.get('lastRandom', null)) deck.push(deck.shift());
+      changed = true;
     }
-    store.set(deckKey, deck);
+    // Called from the setup screen too (to load the next surprise early): write only what changed.
+    if (changed) store.set(deckKey, deck);
     return deck;
   }
   function pickRandom(topic) {
@@ -316,7 +329,7 @@
     const b = els.picBtn;
     b.innerHTML = '';
     b.style.backgroundImage = '';
-    if (setup.picture === 'random' || topicIcon(topicOf(setup.picture)) === 'random') {
+    if (isRandom(setup.picture) && topicIcon(topicOf(setup.picture)) === 'random') {
       b.classList.add('is-random');
       b.innerHTML = '<span aria-hidden="true">?</span>';
     } else {
@@ -376,8 +389,7 @@
   }
 
   // ---------- picture sheet ----------
-  let gridKey = '';
-  function tile(id, name, photo) {
+  function tile(id, name) {
     const cell = document.createElement('div');
     cell.className = 'pic-cell';
     const b = document.createElement('button');
@@ -388,15 +400,6 @@
     label.textContent = name;
     b.append(thumb(id, 'pic-img'), label);
     cell.appendChild(b);
-    if (photo) {
-      const del = document.createElement('button');
-      del.type = 'button';
-      del.className = 'pic-del';
-      del.dataset.del = id;
-      del.setAttribute('aria-label', 'Delete this photo');
-      del.innerHTML = '<svg class="ico"><use href="#i-close"/></svg>';
-      cell.appendChild(del);
-    }
     return cell;
   }
   function section(title, count, cells) {
@@ -413,15 +416,8 @@
   }
   function buildPictureGrid() {
     const host = $('#pictureGrid');
-    const key = photos.map((p) => p.id).join(',');
-    if (key !== gridKey || !host.childElementCount) {
-      gridKey = key;
-      host.innerHTML = '';
-      const add = document.createElement('div');
-      add.className = 'pic-cell';
-      add.innerHTML = '<button type="button" class="pic-tile pic-add" data-add="1" aria-label="Add your own photo"><span class="pic-img"><svg class="ico"><use href="#i-photo"/></svg></span><span>Add a photo</span></button>';
-      host.appendChild(section('Surprise', null, [tile('random', 'Surprise me'), add]));
-      if (photos.length) host.appendChild(section('Your photos', photos.length, photos.map((p) => tile(p.id, 'Your photo', true))));
+    if (!host.childElementCount) {
+      host.appendChild(section('Surprise', null, [tile('random', 'Surprise me')]));
       PK.pictures.categories.forEach((cat) => {
         const items = PK.pictures.items.filter((i) => i.cat === cat.id);
         host.appendChild(section(cat.name, items.length, items.map((i) => tile(i.id, i.name))));
@@ -430,11 +426,8 @@
     $$('.pic-tile[data-id]', host).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === setup.picture)));
   }
   $('#pictureGrid').addEventListener('click', (e) => {
-    const del = e.target.closest('.pic-del');
-    if (del) { deletePhoto(del.dataset.del, del); return; }
     const t = e.target.closest('.pic-tile');
     if (!t) return;
-    if (t.dataset.add) { els.photoInput.click(); return; }
     closeSheet(els.pictureSheet);
     choosePicture(t.dataset.id);
   });
@@ -443,7 +436,7 @@
   // The full picture chooser above (buildPictureGrid) is kept but not opened from anywhere for now.
   function shownTopics() {
     const on = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
-    return TOPIC_ORDER.filter((t) => on.has(t) && (t === 'photos' ? photos.length > 0 : PK.pictures.items.some((i) => i.cat === t && i.surprise)));
+    return TOPIC_ORDER.filter((t) => on.has(t) && PK.pictures.items.some((i) => i.cat === t && i.surprise));
   }
   function topicVoice(id) {
     return PK.speech.topicUrl(id === 'random' ? 'random' : topicOf(id));
@@ -472,42 +465,6 @@
     renderSetup();
     if (!isRandom(id)) setTimeout(peek, 120);
   }
-
-  async function deletePhoto(id, btn) {
-    if (!btn.classList.contains('confirm')) {
-      btn.classList.add('confirm');
-      btn.setAttribute('aria-label', 'Tap again to delete this photo');
-      toast('Tap the red button again to delete this photo');
-      setTimeout(() => { btn.classList.remove('confirm'); btn.setAttribute('aria-label', 'Delete this photo'); }, 3500);
-      return;
-    }
-    await PK.photos.remove(id);
-    const p = photos.find((x) => x.id === id);
-    if (p) URL.revokeObjectURL(p.url);
-    photos = photos.filter((x) => x.id !== id);
-    if (setup.picture === id) { setup.picture = 'rocket'; saveSetup(); }
-    routines.forEach((r) => { if (r.picture === id) r.picture = 'random'; });
-    saveRoutines();
-    gridKey = '#';
-    buildPictureGrid();
-    renderSetup();
-    toast('Photo deleted');
-  }
-
-  els.photoInput.addEventListener('change', async () => {
-    const file = els.photoInput.files && els.photoInput.files[0];
-    els.photoInput.value = '';
-    if (!file) return;
-    try {
-      const row = await PK.photos.add(file);
-      photos.push({ id: row.id, url: URL.createObjectURL(row.blob) });
-      store.set('deck', [row.id].concat(store.get('deck', []) || [])); // show it on the very next surprise
-      buildPictureGrid();
-      toast('Photo added. It will be the next surprise, and it stays on this device.');
-    } catch (e) {
-      toast('That photo could not be opened. Try a JPEG or PNG file.');
-    }
-  });
 
   // ---------- routines sheet ----------
   const routineThumb = (pic) => thumb(pic, 'routine-thumb');
@@ -785,14 +742,16 @@
   // ---------- done ----------
   let wakeReleaseTimer = 0;
   let celebration = 0; // id of the current celebration, so a stale one stops on its own
+  let celebrating = false;
   let spinTimer = 0;
   let sayTimer = 0;
 
   /** "It's a cat!" and a meow, if the picture has them and voices are on. */
-  function sayPicture() {
+  /** otherwise() runs when there is nothing to say: voices off, no clips, or they could not load. */
+  function sayPicture(otherwise) {
     const urls = settings.speak ? PK.speech.urls(timer.meta.picture) : [];
-    if (urls.length) PK.sound.speak(urls);
-    return urls.length > 0;
+    if (urls.length) PK.sound.speak(urls, otherwise);
+    else if (otherwise) otherwise();
   }
 
   function finish() {
@@ -809,13 +768,15 @@
     return { x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
   }
 
-  // Fireworks, little pictures flying out and a spinning picture. With "Keep celebrating" on
-  // (the default) it goes round and round until someone taps Done or Again.
-  function celebrate() {
+  // Fireworks, little pictures flying out, a spinning picture and its voice: once when time is up,
+  // and once more each time the picture is tapped. With "Keep celebrating" on it goes round and
+  // round until someone taps Done or Again.
+  function celebrate(fromTap) {
     const name = settings.endSound;
     const fwGain = name === 'fireworks' ? 1 : 0.35;
     if (name !== 'fireworks') PK.sound.playEnd(name, { repeat: settings.repeatEnd });
     const id = ++celebration;
+    celebrating = true;
     const live = () => view === 'done' && id === celebration;
     const run = (first) => {
       if (!first) dial.spin();
@@ -830,11 +791,13 @@
     };
     run(true);
     clearTimeout(sayTimer);
-    sayTimer = setTimeout(() => { if (live()) sayPicture(); }, 600); // as the picture spins into view
+    // As the picture spins into view. A tapped picture with nothing to say still answers with a boing.
+    sayTimer = setTimeout(() => { if (live()) sayPicture(fromTap ? () => PK.sound.boing() : undefined); }, fromTap ? 250 : 600);
   }
 
   function stopCelebration() {
     celebration++;
+    celebrating = false;
     clearTimeout(spinTimer);
     clearTimeout(sayTimer);
     PK.sound.stopSpeech();
@@ -1173,10 +1136,8 @@
   els.fullBtn.addEventListener('click', toggleFullscreen);
   dialEl.addEventListener('click', () => {
     if (view === 'done') {
-      dial.spin();
-      if (!sayPicture()) PK.sound.boing();
-      PK.fireworks.updateHole(dialHole());
-      PK.fireworks.pictureBurst(12);
+      dial.spin(); // again, again: the whole celebration once more
+      celebrate(true);
     }
     else if (view === 'run') poke();
   });
@@ -1211,7 +1172,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) return;
     PK.sound.resume();
-    if (view === 'run') holdWake();
+    if (view === 'run' || (celebrating && settings.repeatEnd)) holdWake(); // the lock is lost whenever the page is hidden
     lastSecond = -1;
     render();
     kick();
@@ -1232,6 +1193,7 @@
     if (next.status === 'idle' && view !== 'setup') { goSetup(); return; }
     if ((next.status === 'running' || next.status === 'paused') && (next.endAt !== timer.endAt || next.status !== timer.status || next.total !== timer.total)) {
       Object.assign(timer, next.toJSON());
+      stopCelebration(); // this tab may still be celebrating the timer before
       enterRun();
     }
   });
@@ -1303,7 +1265,6 @@
     host.innerHTML = '';
     const chosen = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
     const groups = PK.pictures.categories.map((c) => [c.id, c.name, PK.pictures.items.filter((i) => i.cat === c.id && i.surprise).length]);
-    groups.push(['photos', 'Your photos', photos.length]);
     groups.forEach(([id, name, count]) => {
       const label = document.createElement('label');
       label.className = 'cat-chip';
@@ -1360,14 +1321,6 @@
       renderSetup();
       setTimeout(peek, 900);
     }
-
-    PK.photos.list().then((rows) => {
-      photos = rows.map((r) => ({ id: r.id, url: URL.createObjectURL(r.blob) }));
-      photosLoaded = true;
-      if (isPhoto(setup.picture) && !photoUrl(setup.picture)) { setup.picture = 'rocket'; saveSetup(); }
-      if (view === 'setup') renderSetup();
-      else if (timer.meta && timer.meta.picture) showPicture(timer.meta.picture);
-    });
   }
 
   boot();

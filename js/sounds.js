@@ -534,7 +534,11 @@
   }
 
   // ---------- picture names and sounds (recorded clips) ----------
-  const clips = new Map(); // url → Promise<{ buffer, offset, duration } | null>
+  // url → Promise<{ buffer, offset, duration, gain } | null>, most recently used last. Decoded sound
+  // is big (up to 1 MB a clip) and the app stays open for days, so only the recent ones are kept;
+  // the rest come back quickly from the offline cache.
+  const clips = new Map();
+  const CLIPS_KEPT = 24; // a picture's two clips plus the topic names of the "?" sheet
   let speechSources = [];
   let speechToken = 0;
 
@@ -575,7 +579,12 @@
 
   /** Fetches and decodes a clip once; a failed load (offline) is tried again next time. */
   function loadClip(url) {
-    if (clips.has(url)) return clips.get(url);
+    if (clips.has(url)) {
+      const kept = clips.get(url);
+      clips.delete(url);
+      clips.set(url, kept); // used again: youngest
+      return kept;
+    }
     const job = fetch(url)
       .then((res) => (res.ok ? res.arrayBuffer() : null))
       .then((data) => {
@@ -588,6 +597,10 @@
       .catch(() => null)
       .then((clip) => { if (!clip) clips.delete(url); return clip; });
     clips.set(url, job);
+    for (const old of clips.keys()) {
+      if (clips.size <= CLIPS_KEPT) break;
+      clips.delete(old);
+    }
     return job;
   }
 
@@ -607,13 +620,16 @@
     }
   }
 
-  /** Plays the clips one after another ("It's a cat!", then a meow), with the end sounds dipped under them. */
-  function speak(urls) {
+  /** Plays the clips one after another ("It's a cat!", then a meow), with the end sounds dipped under them.
+      onNothing() is called if no clip could be loaded (offline and never cached, or opened from disk). */
+  function speak(urls, onNothing) {
     stopSpeech();
     if (!urls || !urls.length) return;
     const token = speechToken;
     Promise.all(urls.map(loadClip)).then((list) => {
-      if (token !== speechToken || !ctx) return;
+      if (token !== speechToken) return;
+      if (!list.some(Boolean)) { if (onNothing) onNothing(); return; }
+      if (!ctx) return;
       // Right after the first tap the context may still be starting: wait for it instead of staying silent.
       if (ctx.state === 'running') play(list);
       else ctx.resume().then(() => play(list), () => {});

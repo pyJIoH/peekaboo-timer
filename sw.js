@@ -1,7 +1,10 @@
 /* Peekaboo Timer — service worker. Network first for the app's own files (always fresh when
    online), cache fallback so it keeps working offline. Fonts are cached on first use. */
-const VERSION = 'peekaboo-v17';
+const VERSION = 'peekaboo-v18';
 const FONTS = 'peekaboo-fonts';
+// Pictures and sounds, kept across app versions so an update does not throw them away. Their files
+// never change; if one is ever remade under the same name, raise this number.
+const MEDIA = 'peekaboo-media-v1';
 const SHELL = [
   './',
   'index.html',
@@ -15,7 +18,6 @@ const SHELL = [
   'js/sky.js',
   'js/dial.js',
   'js/wheel.js',
-  'js/photos.js',
   'js/fireworks.js',
   'js/app.js',
   'manifest.webmanifest',
@@ -32,7 +34,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('peekaboo-') && k !== VERSION && k !== FONTS).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('peekaboo-') && k !== VERSION && k !== FONTS && k !== MEDIA).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -42,11 +44,11 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // Pictures and sounds never change (a new version starts a new cache), so after the first load
-  // they come straight from the cache: instant, and offline too.
+  // Pictures and sounds never change, so after the first load they come straight from their own
+  // long-lived cache: instant, and offline too, also right after an update.
   if (url.origin === self.location.origin && /\/(audio|library)\//.test(url.pathname)) {
     event.respondWith(
-      caches.open(VERSION).then(async (cache) => {
+      caches.open(MEDIA).then(async (cache) => {
         const hit = await cache.match(req, { ignoreSearch: true });
         if (hit) return hit;
         const res = await fetch(req);

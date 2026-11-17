@@ -27,7 +27,6 @@
 <script defer src="js/sky.js"></script>
 <script defer src="js/dial.js"></script>
 <script defer src="js/wheel.js"></script>
-<script defer src="js/photos.js"></script>
 <script defer src="js/fireworks.js"></script>
 <script defer src="js/app.js"></script>
 </head>
@@ -47,7 +46,6 @@
     <symbol id="i-again" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4"/><path d="M4.5 4.5V9H9"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-    <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="13" rx="3"/><circle cx="12" cy="13" r="3.3"/><path d="M8.6 6.5L10 4.5h4l1.4 2"/></symbol>
     <symbol id="i-trash" viewBox="0 0 24 24"><path d="M5 7h14M10 7V5h4v2M7 7l1 12.5h8L17 7"/></symbol>
     <symbol id="i-install" viewBox="0 0 24 24"><path d="M12 4v10.5M7.5 10L12 14.5 16.5 10M5 19.5h14"/></symbol>
     <symbol id="i-ear" viewBox="0 0 24 24"><path d="M8 10.5V8a4 4 0 0 1 8 0c0 3-3 3.5-3 6.5a2.5 2.5 0 0 1-5 0"/><path d="M10.5 9.5a1.5 1.5 0 0 1 3 0"/></symbol>
@@ -160,7 +158,6 @@
     <div class="sheet-body">
       <p class="hint">“Surprise me” shows a different picture every time the timer starts.</p>
       <div class="pic-sections" id="pictureGrid"></div>
-      <input type="file" id="photoInput" accept="image/*" hidden>
     </div>
   </div>
 </dialog>
@@ -292,7 +289,7 @@
             <input class="switch" type="checkbox" id="setSpeak" data-setting="speak">
           </label>
           <label class="set-row" for="setRepeat">
-            <span class="set-text"><b>Keep celebrating until Done</b><small>Fireworks, flying pictures and the spinning picture go on until someone taps Done</small></span>
+            <span class="set-text"><b>Keep celebrating until Done</b><small>Off: fireworks play once, and again when the picture is tapped. On: they go on until someone taps Done</small></span>
             <input class="switch" type="checkbox" id="setRepeat" data-setting="repeatEnd">
           </label>
         </div>
@@ -334,7 +331,7 @@
         <h3 id="sgAbout">About</h3>
         <div class="set-cells">
           <div class="set-row stack about-text">
-            <p>Peekaboo Timer has no ads, no accounts and no tracking. Your photos, routines and settings stay on this device.</p>
+            <p>Peekaboo Timer has no ads, no accounts and no tracking. Your routines and settings stay on this device.</p>
             <p>Pictures: Microsoft Fluent Emoji (MIT licence) and Google Noto Emoji (Apache 2.0 licence). Monsters, shapes and the eight big scenes are drawn by the app itself.</p>
             <p id="installNote">To use it like an app, add it to your home screen. On iPhone and iPad: tap Share, then <b>Add to Home Screen</b>.</p>
             <p class="app-version" id="appVersion"></p>
