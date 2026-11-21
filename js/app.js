@@ -122,7 +122,7 @@
     pauseBtn: $('#pauseBtn'), stopBtn: $('#stopBtn'), minusCoin: $('#minusCoin'), plusCoin: $('#plusCoin'),
     muteBtn: $('#muteBtn'), digitsBtn: $('#digitsBtn'), fullBtn: $('#fullBtn'), installBtn: $('#installBtn'),
     soundHint: $('#soundHint'), toast: $('#toast'), picker: $('#picker'),
-    pictureSheet: $('#pictureSheet'), topicSheet: $('#topicSheet'), routineSheet: $('#routineSheet'), settingsSheet: $('#settingsSheet'),
+    topicSheet: $('#topicSheet'), routineSheet: $('#routineSheet'), settingsSheet: $('#settingsSheet'),
   };
 
   // ---------- pictures ----------
@@ -151,7 +151,18 @@
 
   /** A round thumbnail for any picture (sticker art gets its coloured backdrop). */
   function thumb(id, className) {
-    if (topicOf(id)) return thumb(topicIcon(topicOf(id)), className); // a topic shows its picture
+    if (topicOf(id)) {
+      // A topic shows its picture with a little rainbow "?": a surprise from it, not that picture.
+      const icon = topicIcon(topicOf(id));
+      const span = thumb(icon, className);
+      if (icon !== 'random') {
+        const q = document.createElement('span');
+        q.className = 'q-badge';
+        q.innerHTML = '<svg viewBox="0 0 20 20" aria-hidden="true"><text x="10" y="15.4" text-anchor="middle">?</text></svg>';
+        span.appendChild(q);
+      }
+      return span;
+    }
     const span = document.createElement('span');
     span.className = className;
     if (id === 'random') {
@@ -388,74 +399,108 @@
     peekRaf = requestAnimationFrame(step);
   }
 
-  // ---------- picture sheet ----------
-  function tile(id, name) {
-    const cell = document.createElement('div');
-    cell.className = 'pic-cell';
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'pic-tile' + (id === 'random' ? ' pic-random' : '');
-    b.dataset.id = id;
-    const label = document.createElement('span');
-    label.textContent = name;
-    b.append(thumb(id, 'pic-img'), label);
-    cell.appendChild(b);
-    return cell;
-  }
-  function section(title, count, cells) {
-    const sec = document.createElement('section');
-    sec.className = 'pic-section';
-    const h = document.createElement('h3');
-    h.textContent = title;
-    if (count != null) { const c = document.createElement('span'); c.textContent = String(count); h.appendChild(c); }
-    const grid = document.createElement('div');
-    grid.className = 'pic-grid';
-    cells.forEach((c) => grid.appendChild(c));
-    sec.append(h, grid);
-    return sec;
-  }
-  function buildPictureGrid() {
-    const host = $('#pictureGrid');
-    if (!host.childElementCount) {
-      host.appendChild(section('Surprise', null, [tile('random', 'Surprise me')]));
-      PK.pictures.categories.forEach((cat) => {
-        const items = PK.pictures.items.filter((i) => i.cat === cat.id);
-        host.appendChild(section(cat.name, items.length, items.map((i) => tile(i.id, i.name))));
-      });
-    }
-    $$('.pic-tile[data-id]', host).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === setup.picture)));
-  }
-  $('#pictureGrid').addEventListener('click', (e) => {
-    const t = e.target.closest('.pic-tile');
-    if (!t) return;
-    closeSheet(els.pictureSheet);
-    choosePicture(t.dataset.id);
-  });
-
-  // ---------- topic sheet (the "?" coin): a child picks a topic, the picture stays a surprise ----------
-  // The full picture chooser above (buildPictureGrid) is kept but not opened from anywhere for now.
+  // ---------- picture sheet (the "?" coin) ----------
+  // One long list to scroll through: "Surprise me" first, then every topic with its own "Surprise"
+  // (the child picks a topic, the picture stays a secret) and all of its pictures, so one exact
+  // picture can be picked too.
+  const panelEl = $('#topicPanel');
+  const pickBody = $('#topicBody');
   function shownTopics() {
     const on = new Set(Array.isArray(settings.surprise) && settings.surprise.length ? settings.surprise : ALL_GROUPS);
     return TOPIC_ORDER.filter((t) => on.has(t) && PK.pictures.items.some((i) => i.cat === t && i.surprise));
   }
-  function topicVoice(id) {
-    return PK.speech.topicUrl(id === 'random' ? 'random' : topicOf(id));
+  /** The part of the list a picture lives in: "random" for Surprise me, otherwise its topic. */
+  function sectionFor(id) {
+    const shown = shownTopics();
+    const t = topicOf(id) || (id !== 'random' && (PK.pictures.get(id) || {}).cat);
+    return t && shown.includes(t) ? t : 'random';
   }
-  function buildTopicGrid() {
+  /** A topic's pictures, with the two art styles of the same emoji side by side. */
+  function topicPictures(t) {
+    const items = PK.pictures.items.filter((i) => i.cat === t && i.surprise);
+    const key = (i) => (i.kind === 'sticker' ? i.id.slice(2) : i.id);
+    const first = new Map();
+    items.forEach((i, n) => { if (!first.has(key(i))) first.set(key(i), n); });
+    return items.map((i, n) => [first.get(key(i)), n, i]).sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((x) => x[2]);
+  }
+  /** One picture in a topic's grid. */
+  function tile(id, name) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pic-tile';
+    b.dataset.id = id;
+    b.setAttribute('aria-label', name);
+    b.title = name;
+    b.append(thumb(id, 'pic-img'));
+    return b;
+  }
+  /** A wide "Surprise" button: "random" for Surprise me, "random:animals" for a topic. */
+  function surpriseButton(id, title, note) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pic-tile topic-any' + (id === 'random' ? ' pic-random' : '');
+    b.dataset.id = id;
+    const text = document.createElement('span');
+    const big = document.createElement('b');
+    big.textContent = title;
+    const small = document.createElement('small');
+    small.textContent = note;
+    text.append(big, small);
+    b.append(thumb(id, 'pic-img'), text); // a topic shows its picture with a little "?"
+    return b;
+  }
+  function pictureSection(t) {
+    const sec = document.createElement('section');
+    sec.className = 'pic-section';
+    sec.dataset.topic = t;
+    if (t === 'random') {
+      const hint = document.createElement('p');
+      hint.className = 'hint';
+      hint.textContent = 'The picture stays a surprise until time is up. Below, pick a surprise from one topic, or the picture itself.';
+      sec.append(surpriseButton('random', 'Surprise me', 'Any picture from any topic'), hint);
+      return sec;
+    }
+    const h = document.createElement('h3');
+    h.textContent = topicName(t);
+    const grid = document.createElement('div');
+    grid.className = 'pic-grid icon-grid';
+    grid.append(...topicPictures(t).map((i) => tile(i.id, i.name)));
+    sec.append(h, surpriseButton(`random:${t}`, 'Surprise', `Any picture from ${topicName(t).toLowerCase()}`), grid);
+    return sec;
+  }
+  let builtFor = null; // the topics the list was made for (Settings can change them)
+  function buildPictureList() {
+    const topics = ['random', ...shownTopics()];
+    if (builtFor !== topics.join()) {
+      builtFor = topics.join();
+      panelEl.replaceChildren(...topics.map(pictureSection));
+    }
+    $$('.pic-tile[data-id]', panelEl).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === setup.picture)));
+  }
+  function openPictureSheet() {
     if (settings.speak) PK.sound.preloadClips(['random', ...shownTopics()].map((t) => PK.speech.topicUrl(t)));
-    const host = $('#topicGrid');
-    host.innerHTML = '';
-    host.appendChild(tile('random', 'Surprise me'));
-    shownTopics().forEach((t) => host.appendChild(tile(`random:${t}`, topicName(t))));
-    $$('.pic-tile[data-id]', host).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.id === setup.picture)));
+    buildPictureList();
+    openSheet(els.topicSheet);
+    // Open where the chosen picture is: the picture itself in the middle, or its topic at the top.
+    pickBody.scrollTop = 0;
+    const picked = $('.icon-grid .pic-tile[aria-pressed="true"]', panelEl);
+    const sec = $(`.pic-section[data-topic="${sectionFor(setup.picture)}"]`, panelEl);
+    if (picked) picked.scrollIntoView({ block: 'center' });
+    else if (sec && sec !== panelEl.firstElementChild) {
+      pickBody.scrollTop = sec.getBoundingClientRect().top - pickBody.getBoundingClientRect().top - 10;
+    }
   }
-  $('#topicGrid').addEventListener('click', (e) => {
+  const sayTopic = (t) => {
+    const voice = settings.speak && PK.speech.topicUrl(t);
+    if (voice) { PK.sound.unlock(); PK.sound.speak([voice]); } // "Animals!"
+  };
+  panelEl.addEventListener('click', (e) => {
     const t = e.target.closest('.pic-tile');
     if (!t) return;
-    const voice = settings.speak && topicVoice(t.dataset.id);
-    if (voice) { PK.sound.unlock(); PK.sound.speak([voice]); } // "Animals!"
+    const id = t.dataset.id;
+    if (isRandom(id)) sayTopic(id === 'random' ? 'random' : topicOf(id));
     closeSheet(els.topicSheet);
-    choosePicture(t.dataset.id);
+    choosePicture(id);
   });
 
   function choosePicture(id) {
@@ -1126,7 +1171,7 @@
   // ---------- events ----------
   $('#settingsBtn').addEventListener('click', () => openSheet(els.settingsSheet));
   $('#routinesBtn').addEventListener('click', openRoutineSheet);
-  els.picBtn.addEventListener('click', () => { buildTopicGrid(); openSheet(els.topicSheet); });
+  els.picBtn.addEventListener('click', openPictureSheet);
   const startFromSetup = () => startTimer({ duration: setup.duration, picture: setup.picture, label: setup.label });
   els.startBtn.addEventListener('click', startFromSetup);
   els.pauseBtn.addEventListener('click', togglePause);

@@ -113,7 +113,7 @@
       <div class="bump" id="bump" aria-hidden="true"></div>
 
       <div class="ctl-row" id="ctlRow">
-        <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose a topic for the hidden picture" title="Topic"></button>
+        <button class="coin coin-pic slot-l v-setup" id="picBtn" type="button" aria-label="Choose the hidden picture" title="Picture"></button>
         <button class="coin coin-gold slot-l v-run" id="plusCoin" type="button" data-adjust="small" aria-label="10 seconds more">
           <svg class="coin-arrow" aria-hidden="true"><use href="#i-coin-cw"/></svg><span class="coin-num" id="plusNum">+10</span>
         </button>
@@ -148,30 +148,15 @@
   <button class="float-btn float-l" id="installBtn" type="button" hidden><svg class="ico"><use href="#i-install"/></svg><span>Install</span></button>
 </main>
 
-<!-- ===== Picture sheet ===== -->
-<dialog class="sheet" id="pictureSheet" aria-labelledby="pictureSheetTitle">
-  <div class="sheet-inner">
-    <header class="sheet-head">
-      <h2 id="pictureSheetTitle">Hidden picture</h2>
-      <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
-    </header>
-    <div class="sheet-body">
-      <p class="hint">“Surprise me” shows a different picture every time the timer starts.</p>
-      <div class="pic-sections" id="pictureGrid"></div>
-    </div>
-  </div>
-</dialog>
-
-<!-- ===== Topic sheet (the "?" coin) ===== -->
+<!-- ===== Picture sheet (the "?" coin): Surprise, then every topic with all of its pictures ===== -->
 <dialog class="sheet" id="topicSheet" aria-labelledby="topicSheetTitle">
   <div class="sheet-inner">
     <header class="sheet-head">
       <h2 id="topicSheetTitle">What will hide?</h2>
       <button class="icon-btn" type="button" data-close aria-label="Close"><svg class="ico"><use href="#i-close"/></svg></button>
     </header>
-    <div class="sheet-body">
-      <p class="hint">Pick a topic. The picture stays a surprise until time is up.</p>
-      <div class="pic-grid topic-grid" id="topicGrid"></div>
+    <div class="sheet-body" id="topicBody">
+      <div id="topicPanel"></div>
     </div>
   </div>
 </dialog>
